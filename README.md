@@ -1,6 +1,6 @@
 ![logo](./rko-logo.svg)
 
-Out of nowhere! A state management library for React, with built-in undo, redo and persistence. Built on [Zustand](https://github.com/pmndrs/zustand).
+Out of nowhere! A state management library for React with built-in undo, redo, and persistence. Built on [Zustand](https://github.com/pmndrs/zustand).
 
 💜 Like this? Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
 
