@@ -1,10 +1,6 @@
-# ![Screenshot](screenshot.svg 'Perfect Freehand')
+A state manager for React, built on [Zustand](https://github.com/pmndrs/zustand), with built-in undo, redo and persistence.
 
-Draw perfect pressure-sensitive freehand strokes.
-
-🔗 Try out a [demo](https://perfect-freehand-example.vercel.app/).
-
-💰 Using this library in a commercial product? Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
+💜 Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
 
 ## Table of Contents
 
@@ -17,249 +13,174 @@ Draw perfect pressure-sensitive freehand strokes.
 ## Installation
 
 ```bash
-npm install perfect-freehand
+npm install rko
 ```
 
 or
 
 ```bash
-yarn add perfect-freehand
+yarn add rko
 ```
 
 ## Usage
 
-This package's default export is a function that:
+To use the library, first define your state as a class that extends `StateManager`.
 
-- accepts an array of points and an (optional) options object
-- returns a stroke outline as an array of points formatted as `[x, y]`
+```ts
+// state.ts
 
-```js
-import getStroke from 'perfect-freehand'
-```
+import { StateManager } from 'rko'
 
-You may format your input points as array _or_ an object. In both cases, the value for pressure is optional (it will default to `.5`).
+interface State {
+  name: string
+  count: number
+}
 
-```js
-getStroke([
-  [0, 0, 0],
-  [10, 5, 0.5],
-  [20, 8, 0.3],
-])
+class MyState extends StateManager<State> {
+  adjustCount = (n: number) =>
+    this.setState({
+      before: {
+        count: this.state.count,
+      },
+      after: {
+        count: this.state.count + n,
+      },
+    })
+}
 
-getStroke([
-  { x: 0, y: 0, pressure: 0 },
-  { x: 10, y: 5, pressure: 0.5 },
-  { x: 20, y: 8, pressure: 0.3 },
-])
-```
-
-### Options
-
-The options object is optional, as are each of its properties.
-
-| Property           | Type     | Default | Description                                           |
-| ------------------ | -------- | ------- | ----------------------------------------------------- |
-| `size`             | number   | 8       | The base size (diameter) of the stroke.               |
-| `thinning`         | number   | .5      | The effect of pressure on the stroke's size.          |
-| `smoothing`        | number   | .5      | How much to soften the stroke's edges.                |
-| `streamline`       | number   | .5      | How much to streamline the stroke.                    |
-| `simulatePressure` | boolean  | true    | Whether to simulate pressure based on velocity.       |
-| `easing`           | function | t => t  | An easing function to apply to each point's pressure. |
-| `start`            | { }      |         | Tapering options for the start of the line.           |
-| `end`              | { }      |         | Tapering options for the end of the line.             |
-| `last`             | boolean  | true    | Whether the stroke is complete.                       |
-
-**Note:** When the `last` property is `true`, the line's end will be drawn at the last input point, rather than slightly behind it.
-
-The `start` and `end` options accept an object:
-
-| Property | Type     | Default | Description                                 |
-| -------- | -------- | ------- | ------------------------------------------- |
-| `cap`    | boolean  | true    | Whether to draw a cap.                      |
-| `taper`  | number   | 0       | The distance to taper.                      |
-| `easing` | function | t => t  | An easing function for the tapering effect. |
-
-**Note:** The `cap` property has no effect when `taper` is more than zero.
-
-```js
-getStroke(myPoints, {
-  size: 8,
-  thinning: 0.5,
-  smoothing: 0.5,
-  streamline: 0.5,
-  easing: (t) => t * t * t,
-  simulatePressure: true,
-  last: true,
-  start: {
-    taper: 20,
-    easing: (t) => t * t * t,
-  },
-  end: {
-    taper: 20,
-    easing: (t) => t * t * t,
-  },
+export const myState = new MyState({
+  increment,
 })
 ```
 
-> **Tip:** To create a stroke with a steady line, set the `thinning` option to `0`.
+Then use the `useStore` hook to access the state. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it). You can also use your methods (e.g. `increment`) directly, as well as the `StateManager`'s built-in methods (e.g. `undo`, `redo` and `reset`).
 
-> **Tip:** To create a stroke that gets thinner with pressure instead of thicker, use a negative number for the `thinning` option.
+```tsx
+// app.tsx
+import { myState } from './state'
 
-### Rendering
+export default function App() {
+  const { name } = myState.useStore((s) => s.name)
+  const { count } = myState.useStore((s) => s.count)
 
-While `getStroke` returns an array of points representing the outline of a stroke, it's up to you to decide how you will render these points.
-
-The function below will turn the points returned by `getStroke` into SVG path data.
-
-```js
-function getSvgPathFromStroke(stroke) {
-  if (!stroke.length) return ''
-
-  const d = stroke.reduce(
-    (acc, [x0, y0], i, arr) => {
-      const [x1, y1] = arr[(i + 1) % arr.length]
-      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2)
-      return acc
-    },
-    ['M', ...stroke[0], 'Q']
+  return (
+    <div>
+      <h1>Hello {name}</h1>
+      <h2>Count: {count}</h2>
+      <button onClick={() => myState.adjustCount(1)}>Increment</button>
+      <button onClick={() => myState.adjustCount(-1)}>Decrement</button>
+      <button onClick={myState.undo}>Undo</button>
+      <button onClick={myState.redo}>Redo</button>
+      <button onClick={myState.reset}>Reset</button>
+    </div>
   )
-
-  d.push('Z')
-  return d.join(' ')
 }
 ```
 
-To use this function, first use perfect-freehand to turn your input points into a stroke outline, then pass the result to `getSvgPathFromStroke`.
+## StateManager API
 
-```js
-import getStroke from 'perfect-freehand'
+You can use the `StateManager` class to create a state manager for your app. You will never use `StateManager` directly. Instead, you will extend the `StateManager` class and add methods that use its internal API in order to create a state manager for your particular app.
 
-const myStroke = getStroke(myInputPoints)
+**Tip**: You can use the `StateManager` class to create a state manager for your app.
 
-const pathData = getSvgPathFromStroke(myStroke)
+### Internal API
+
+In your class definition, you can define methods that update your state using `StateManager`'s internal API.
+
+#### `patchState(patch: Patch<T>)`
+
+Update the state without effecting the undo/redo stack. This method accepts a `Patch` type object, or a "deep partial" of the state object containing only the changes that you wish to make.
+
+Example:
+
+```ts
+toggleMenuOpen = () =>
+  this.patchState({
+    ui: {
+      menuOpen: !this.state.ui.menuOpen,
+    },
+  })
 ```
 
-You could then pass this string either to an [SVG path](https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/d) element:
+#### `setState(command: Command<T>)`
 
-```jsx
-<path d={pathData} />
+Update the state and push the command to the undo/redo stack. This method accepts a `Command` type object containing two `Patch`es: `before` and `after`. The `after` patch should contain the changes to the state that you wish to make immediately and when the command is "re-done". The `before` patch should contain the changes to make when the command is "undone".
+
+```ts
+adjustCount = (n: number) =>
+  this.setState({
+    before: {
+      count: this.state.count,
+    },
+    after: {
+      count: this.state.count + n,
+    },
+  })
 ```
 
-Or, if you are rendering with HTML Canvas, you can pass the result to a [`Path2D` constructor](https://developer.mozilla.org/en-US/docs/Web/API/Path2D/Path2D#using_svg_paths)).
+#### `cleanup(state: T, patch: Patch<T>)`
 
-```js
-const myPath = new Path2D(pathData)
-ctx.fill(myPath)
-```
+The cleanup method is called on every state change, _after_ applying the current patch. It returns the "final" updated state. You can override this method in order to clean up any state that is no longer needed. For example, if you have a state that is a list of items, you can use the cleanup method to remove items that are no longer in the list. Note that the changes won't be present in the undo/redo stack.
 
-### Flattening
+```ts
+cleanup = (state: T, patch: Patch<T>) => {
+  const final = { ...state }
 
-To render a stroke as a "flattened" polygon, add the [`polygon-clipping`](https://github.com/mfogel/polygon-clipping) package and use the following function together with the `getSvgPathFromStroke`.
-
-```js
-import polygonClipping from 'polygon-clipping'
-
-function getFlatSvgPathFromStroke(stroke) {
-  const poly = polygonClipping.union([stroke])
-
-  const d = []
-
-  for (let face of poly) {
-    for (let points of face) {
-      d.push(getSvgPathFromStroke(points))
+  for (const id in todos) {
+    if (!todos[id]) {
+      delete final.todos[id]
     }
   }
 
-  return d.join(' ')
+  return final
 }
 ```
 
-> **Tip:** For implementations in Typescript, see the example project included in this repository.
+You can also use the `cleanup` method to implement middleware or other functionality that needs to occur on each state change.
+
+### Public API
+
+The `StateManager` class exposes a public API that you can use to interact with your state either from within your class methods or from anywhere in your application.
+
+#### `undo()`
+
+Move backward in history, un-doing the most recent change.
+
+#### `redo()`
+
+Move forward in history, re-doing the previous undone change.
+
+#### `reset()`
+
+Reset the state to its original state. Also reset the history.
+
+#### `resetHistory()`
+
+Reset the state's history.
+
+#### `forceUpdate()`
+
+Force the state to update.
+
+#### `setSnapshot()`
+
+Save the current state to the the `snapshot` property.
+
+### `snapshot`
+
+The saved snapshot. You can use the `snapshot` to restore earlier parts of the state.
 
 ### Example
 
-```jsx
-import * as React from 'react'
-import getStroke from 'perfect-freehand'
-import { getSvgPathFromStroke } from './utils'
-
-export default function Example() {
-  const [points, setPoints] = React.useState()
-
-  function handlePointerDown(e) {
-    e.preventDefault()
-    setPoints([[e.pageX, e.pageY, e.pressure]])
-  }
-
-  function handlePointerMove(e) {
-    if (e.buttons === 1) {
-      e.preventDefault()
-      setPoints([...points, [e.pageX, e.pageY, e.pressure]])
-    }
-  }
-
-  return (
-    <svg
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      style={{ touchAction: 'none' }}
-    >
-      {points && (
-        <path
-          d={getSvgPathFromStroke(
-            getStroke(points, {
-              size: 24,
-              thinning: 0.5,
-              smoothing: 0.5,
-              streamline: 0.5,
-            })
-          )}
-        />
-      )}
-    </svg>
-  )
-}
-```
-
-[![Edit perfect-freehand-example](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/perfect-freehand-example-biwyi?fontsize=14&hidenavigation=1&theme=dark)
-
-### Advanced Usage
-
-#### `StrokeOptions`
-
-A TypeScript type for the options object.
-
-```ts
-import { StrokeOptions } from 'perfect-freehand'
-```
-
-For advanced usage, the library also exports smaller functions that `getStroke` uses to generate its SVG data. While you can use `getStroke`'s data to render strokes with an HTML canvas (via the Path2D element) or with SVG paths, these new functions will allow you to create paths in other rendering technologies.
-
-#### `getStrokePoints`
-
-```js
-import { strokePoints } from 'perfect-freehand'
-const strokePoints = getStrokePoints(rawInputPoints)
-```
-
-Accepts an array of points (formatted either as `[x, y, pressure]` or `{ x: number, y: number, pressure: number}`) and a streamline value. Returns a set of streamlined points as `[x, y, pressure, angle, distance, lengthAtPoint]`. The path's total length will be the length of the last point in the array.
-
-#### `getOutlinePoints`
-
-Accepts an array of points (formatted as `[x, y, pressure, angle, distance, length]`, i.e. the output of `getStrokePoints`) and returns an array of points (`[x, y]`) defining the outline of a pressure-sensitive stroke.
-
-```js
-import { getOutlinePoints } from 'perfect-freehand'
-const outlinePoints = getOutlinePoints(strokePoints)
-```
+[![Edit undo-redo](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/undo-redo-mf9cx?fontsize=14&hidenavigation=1&theme=dark)
 
 ## Support
 
-Please [open an issue](https://github.com/steveruizok/perfect-freehand/issues/new) for support.
+Please [open an issue](https://github.com/steveruizok/rko/issues/new) for support.
 
 ## Discussion
 
-Have an idea or casual question? Visit the [discussion page](https://github.com/steveruizok/perfect-freehand/discussions).
+Have an idea or casual question? Visit the [discussion page](https://github.com/steveruizok/rko/discussions).
 
 ## Author
 

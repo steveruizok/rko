@@ -3,20 +3,36 @@ html {
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Recursive';
-  font-size: 13px;
+.App {
+  font-family: sans-serif;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
-span[role='label'] {
-  user-select: none;
+.button_list {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
 }
 
-.app {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  overflow: hidden;
+.todo_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+.todo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.todo__checkbox {
+  display: block;
+}
+
+.todo__input {
+  flex-grow: 2;
+  padding: 4px 8px;
 }

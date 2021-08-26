@@ -7,7 +7,8 @@ const name = process.env.npm_package_name || ''
 async function main() {
   try {
     esbuild.buildSync({
-      entryPoints: ['./src/index.ts'],
+      entryPoints: ['./src/index.tsx'],
+      external: ['react', 'react-dom'],
       outdir: 'dist/esm',
       minify: true,
       bundle: true,
@@ -17,7 +18,8 @@ async function main() {
     })
 
     esbuild.buildSync({
-      entryPoints: ['./src/index.ts'],
+      entryPoints: ['./src/index.tsx'],
+      external: ['react', 'react-dom'],
       outdir: 'dist/cjs',
       minify: true,
       bundle: true,

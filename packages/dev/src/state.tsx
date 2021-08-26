@@ -1,4 +1,4 @@
-import { StateManager } from '../index'
+import { StateManager } from 'rko'
 
 export interface Todo {
   id: string
@@ -94,6 +94,8 @@ export class TodoState extends StateManager<State> {
       (todo) => todo.isComplete
     )
 
+    if (completed.length === 0) return
+
     return this.setState({
       before: {
         todos: Object.fromEntries(completed.map((todo) => [todo.id, todo])),
@@ -124,8 +126,6 @@ const initialState: State = {
   },
 }
 
-describe('State manager', () => {
-  it('Creates a state manager', () => {
-    const todoState = new TodoState(initialState)
-  })
-})
+export const todoState = new TodoState(initialState)
+
+console.log(todoState)
