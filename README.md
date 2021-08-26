@@ -1,6 +1,6 @@
 ![logo](./rko-logo.svg)
 
-Out of nowhere! A state management library for React with built-in undo, redo, and persistence. Built on [Zustand](https://github.com/pmndrs/zustand).
+Out of nowhere! A state management library for React with built-in undo, redo, and persistence. Built on [Zustand](https://github.com/pmndrs/zustand). Demo [here](https://codesandbox.io/s/rko-example-mf9cx).
 
 💜 Like this? Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
 
@@ -227,7 +227,7 @@ The saved snapshot. You can use the `snapshot` to restore earlier parts of the s
 
 ### Example
 
-[![Edit undo-redo](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/undo-redo-mf9cx?fontsize=14&hidenavigation=1&theme=dark)
+[![Edit rko-example](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/rko-example-mf9cx?fontsize=14&hidenavigation=1&theme=dark)
 
 ## Support
 
