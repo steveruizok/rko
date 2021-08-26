@@ -1,6 +1,10 @@
-A state manager for React, built on [Zustand](https://github.com/pmndrs/zustand), with built-in undo, redo and persistence.
+![logo](./rko-logo.svg)
 
-💜 Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
+Out of nowhere! A state management library for React, with built-in undo, redo and persistence. Built on [Zustand](https://github.com/pmndrs/zustand).
+
+💜 Like this? Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
+
+![logo](./rko-logo-shadow.svg)
 
 ## Table of Contents
 
@@ -98,11 +102,41 @@ export default function App() {
 
 You can use the `StateManager` class to create a state manager for your app. You will never use `StateManager` directly. Instead, you will extend the `StateManager` class and add methods that use its internal API in order to create a state manager for your particular app.
 
+```ts
+class AppState extends StateManager<State> {
+  // ...
+}
+
+const initialState: State = {
+  // ...
+}
+
+export const appState = new AppState(initialState)
+```
+
 When you create an instance of your `StateManager` sub-class, you pass in your initial state (an object). You can also pass in an `id` string, which will be used to persist the state.
 
 ```ts
-
+export const appState = new AppState(initialState, 'todo-list')
 ```
+
+You can _also_ pass in a version number and an "upgrade" function that will run if a lower version number is found. This function will receive the previous state, the new state, and the version number.
+
+```ts
+export const appState = new AppState(
+  initialState,
+  'todo-list',
+  2,
+  (prev, next, version) => {
+    return {
+      ...prev,
+      weather: 'cloudy',
+    }
+  }
+)
+```
+
+This is useful for migrating the persisted state when you add new properties or when certain properties are no longer needed.
 
 ### Internal API
 

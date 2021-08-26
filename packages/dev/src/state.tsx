@@ -127,5 +127,3 @@ const initialState: State = {
 }
 
 export const todoState = new TodoState(initialState)
-
-console.log(todoState)

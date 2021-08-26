@@ -24,7 +24,7 @@
     "start": "lerna run start --stream --parallel",
     "build": "yarn build:packages && cd packages/dev && yarn build",
     "build:packages": "cd packages/rko && yarn build",
-    "publish:patch": "yarn build:packages && lerna publish patch",
+    "publish:patch": "yarn build:packages && node ./copy-readme.mjs && lerna publish patch",
     "postinstall": "husky install"
   },
   "devDependencies": {
@@ -55,7 +55,8 @@
   "jest": {
     "preset": "ts-jest",
     "setupFilesAfterEnv": [
-      "<rootDir>/setupTests.ts"
+      "<rootDir>/setupTests.ts",
+      "fake-indexeddb/auto"
     ],
     "transform": {
       "^.+\\.(tsx|jsx|ts|js)?$": "ts-jest"

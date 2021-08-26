@@ -57,7 +57,7 @@ export class StateManager<T extends object> {
   /**
    * The current state.
    */
-  protected state: T
+  private _state: T
 
   /**
    * A snapshot of the current state.
@@ -74,36 +74,54 @@ export class StateManager<T extends object> {
    */
   public status: 'loading' | 'ready' = 'loading'
 
-  constructor(initialState: T, id = 'react-state-manager') {
+  constructor(
+    initialState: T,
+    id = 'react-state-manager',
+    version = 1,
+    update = (prev: T, next: T, prevVersion: number): T => next
+  ) {
     this.id = id
-    this.state = initialState
+    this._state = initialState
     this.snapshot = initialState
     this.initialState = initialState
     this.store = createVanilla(() => initialState)
     this.useStore = create(this.store)
 
-    idb.get(this.id).then((saved) => {
-      if (!saved) return
-      this.state = saved
-      this.snapshot = saved
-      this.initialState = saved
-      this.status = 'ready'
-      this.store.setState(saved)
+    idb.get(this.id).then(async (saved) => {
+      if (saved) {
+        let next = saved
+
+        let savedVersion = await idb.get<number>(id + '_version')
+
+        if (savedVersion && savedVersion < version) {
+          next = update(saved, initialState, savedVersion)
+        }
+
+        await idb.set(id + '_version', version)
+
+        this._state = next
+        this.snapshot = next
+        this.initialState = next
+        this.status = 'ready'
+        this.store.setState(next)
+      } else {
+        idb.set(id + '_version', version)
+      }
     })
   }
 
   /**
    * Save the current state to indexdb.
    */
-  private persist = (): Promise<void> => idb.set(this.id, this.state)
+  private persist = (): Promise<void> => idb.set(this.id, this._state)
 
   /**
    * Apply a patch to the current state. This does not effect the undo/redo stack.
    * @param patch
    */
   private applyPatch = (patch: Patch<T>) => {
-    this.state = this.cleanup(merge(this.state, patch), patch)
-    this.store.setState(this.state, true)
+    this._state = this.cleanup(merge(this._state, patch), patch)
+    this.store.setState(this._state, true)
     return this
   }
 
@@ -148,7 +166,7 @@ export class StateManager<T extends object> {
   public reset = (): StateManager<T> => {
     this.stack = []
     this.pointer = -1
-    this.state = this.initialState
+    this._state = this.initialState
     this.store.setState(this.initialState, true)
     return this
   }
@@ -190,7 +208,7 @@ export class StateManager<T extends object> {
    * Save a snapshot of the current state, accessible at `this.snapshot`.
    */
   public setSnapshot = (): StateManager<T> => {
-    this.snapshot = { ...this.state }
+    this.snapshot = { ...this._state }
     return this
   }
 
@@ -198,7 +216,7 @@ export class StateManager<T extends object> {
    * Force the zustand state to update.
    */
   public forceUpdate = () => {
-    this.store.setState(this.state, true)
+    this.store.setState(this._state, true)
   }
 
   /**
@@ -213,5 +231,12 @@ export class StateManager<T extends object> {
    */
   get canRedo(): boolean {
     return this.pointer < this.stack.length - 1
+  }
+
+  /**
+   * The current state.
+   */
+  get state(): T {
+    return this._state
   }
 }
