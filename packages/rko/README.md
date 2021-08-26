@@ -221,7 +221,7 @@ Force the state to update.
 
 Save the current state to the the `snapshot` property.
 
-### `snapshot`
+#### `snapshot`
 
 The saved snapshot. You can use the `snapshot` to restore earlier parts of the state.
 
