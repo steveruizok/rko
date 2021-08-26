@@ -24,8 +24,8 @@
     "start": "lerna run start --stream --parallel",
     "build": "yarn build:packages && cd packages/dev && yarn build",
     "build:packages": "cd packages/rko && yarn build",
-    "publish": "yarn build:packages && node ./copy-readme.mjs && lerna publish",
-    "publish:patch": "yarn build:packages && node ./copy-readme.mjs && lerna publish patch",
+    "prepublish": "yarn build:packages && node ./copy-readme.mjs",
+    "publish:patch": "yarn prepublish && lerna publish patch",
     "postinstall": "husky install"
   },
   "devDependencies": {
