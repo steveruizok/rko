@@ -31,11 +31,13 @@ To use the library, first define your state as a class that extends `StateManage
 
 import { StateManager } from 'rko'
 
+// Define a type for your state
 interface State {
   name: string
   count: number
 }
 
+// Extend StateManager to define your state
 class MyState extends StateManager<State> {
   adjustCount = (n: number) =>
     this.setState({
@@ -48,9 +50,14 @@ class MyState extends StateManager<State> {
     })
 }
 
-export const myState = new MyState({
-  increment,
-})
+// Create and export an instance of your state
+export const myState = new MyState(
+  {
+    name: 'Steve',
+    count: 0,
+  },
+  'my-state'
+)
 ```
 
 Then use the `useStore` hook to access the state. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it). You can also use your methods (e.g. `increment`) directly, as well as the `StateManager`'s built-in methods (e.g. `undo`, `redo` and `reset`).
@@ -60,15 +67,25 @@ Then use the `useStore` hook to access the state. For more on the `useStore` hoo
 import { myState } from './state'
 
 export default function App() {
+  // Select items from the zustand state
   const { name } = myState.useStore((s) => s.name)
   const { count } = myState.useStore((s) => s.count)
+
+  // Call methods on the state
+  function increment() {
+    myState.adjustCount(1)
+  }
+
+  function decrement() {
+    myState.adjustCount(-1)
+  }
 
   return (
     <div>
       <h1>Hello {name}</h1>
       <h2>Count: {count}</h2>
-      <button onClick={() => myState.adjustCount(1)}>Increment</button>
-      <button onClick={() => myState.adjustCount(-1)}>Decrement</button>
+      <button onClick={increment}>Increment</button>
+      <button onClick={decrement}>Decrement</button>
       <button onClick={myState.undo}>Undo</button>
       <button onClick={myState.redo}>Redo</button>
       <button onClick={myState.reset}>Reset</button>
@@ -81,7 +98,11 @@ export default function App() {
 
 You can use the `StateManager` class to create a state manager for your app. You will never use `StateManager` directly. Instead, you will extend the `StateManager` class and add methods that use its internal API in order to create a state manager for your particular app.
 
-**Tip**: You can use the `StateManager` class to create a state manager for your app.
+When you create an instance of your `StateManager` sub-class, you pass in your initial state (an object). You can also pass in an `id` string, which will be used to persist the state.
+
+```ts
+
+```
 
 ### Internal API
 
