@@ -21,6 +21,15 @@ export function TodoItem({ todo }: TodoProps) {
     [todo.id]
   )
 
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        todoState.setTodoText(todo.id, e.currentTarget.value)
+      }
+    },
+    [todo.id]
+  )
+
   const handleTextBlur = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       todoState.setTodoText(todo.id, e.currentTarget.value)
@@ -42,6 +51,7 @@ export function TodoItem({ todo }: TodoProps) {
         value={todo.text}
         onFocus={handleTextFocus}
         onBlur={handleTextBlur}
+        onKeyDown={handleKeyDown}
         onChange={handleTextChange}
         disabled={todo.isComplete}
       />
