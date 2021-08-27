@@ -159,7 +159,7 @@ toggleMenuOpen = () =>
 
 #### `setState(command: Command<T>)`
 
-Update the state and push the command to the undo/redo stack. This method accepts a `Command` type object containing two `Patch`es: `before` and `after`. The `after` patch should contain the changes to the state that you wish to make immediately and when the command is "re-done". The `before` patch should contain the changes to make when the command is "undone".
+Update the state, push the command to the undo/redo stack, and persist the new state. This method accepts a `Command` type object containing two `Patch`es: `before` and `after`. The `after` patch should contain the changes to the state that you wish to make immediately and when the command is "re-done". The `before` patch should contain the changes to make when the command is "undone".
 
 ```ts
 adjustCount = (n: number) =>
@@ -173,12 +173,25 @@ adjustCount = (n: number) =>
   })
 ```
 
-#### `cleanup(state: T, patch: Patch<T>)`
+#### `replaceState(state: T)`
 
-The cleanup method is called on every state change, _after_ applying the current patch. It returns the "final" updated state. You can override this method in order to clean up any state that is no longer needed. For example, if you have a state that is a list of items, you can use the cleanup method to remove items that are no longer in the list. Note that the changes won't be present in the undo/redo stack.
+Works like `patchState` but accepts an entire state instead of a patch. This is useful for cases where a deep merge may be too expensive, such as changing items during a drag or scroll interaction. Note that, like `patchState`, this method will not effect the undo/redo stack. You might also want to call `resetHistory`.
+
+Example:
 
 ```ts
-cleanup = (state: T, patch: Patch<T>) => {
+loadNewTodos = (state: State) =>
+  this.replaceState({
+    todos,
+  })
+```
+
+#### `cleanup(next: T, prev: T, patch: Patch<T>)`
+
+The cleanup method is called on every state change, _after_ applying the current patch. It receives the next state, the previous state, and the patch that was just applied. It returns the "final" updated state. You can override this method in order to clean up any state that is no longer needed. For example, if you have a state that is a list of items, you can use the cleanup method to remove items that are no longer in the list. Note that the changes won't be present in the undo/redo stack.
+
+```ts
+cleanup = (next: State) => {
   const final = { ...state }
 
   for (const id in todos) {
@@ -192,6 +205,21 @@ cleanup = (state: T, patch: Patch<T>) => {
 ```
 
 You can also use the `cleanup` method to implement middleware or other functionality that needs to occur on each state change.
+
+```ts
+cleanup = (next: State, prev: State, patch: Patch<State>) => {
+  // Log an ID from the patch?
+  if (patch.patchId) {
+    logger.log(patch.patchId)
+  }
+
+  // Create a JSON patch and update the server?
+  const serverPatch = jsonpatch.compare(prev, state)
+  server.sendUpdate(clientId, serverPatch)
+
+  return next
+}
+```
 
 ### Public API
 

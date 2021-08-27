@@ -105,6 +105,13 @@ export class TodoState extends StateManager<State> {
       },
     })
   }
+
+  /**
+   * Load an entirely new state.
+   */
+  loadTodos = (state: State) => {
+    return this.replaceState(state)
+  }
 }
 
 const initialState: State = {
@@ -137,11 +144,39 @@ describe('State manager', () => {
     expect(todoState.state.todos.todo0.text).toBe('hello world')
   })
 
+  it('Replaces the state', () => {
+    const todoState = new TodoState(initialState)
+    todoState.loadTodos({
+      todos: {
+        a: {
+          id: 'a',
+          text: 'placeholder a',
+          isComplete: false,
+          dateCreated: 1629575640560,
+        },
+        b: {
+          id: 'b',
+          text: 'placeholder b',
+          isComplete: false,
+          dateCreated: 1629575640560,
+        },
+      },
+    })
+    expect(todoState.state.todos.todo0).toBe(undefined)
+    expect(todoState.state.todos.todo1).toBe(undefined)
+    expect(todoState.state.todos.a.text).toBe('placeholder a')
+    expect(todoState.state.todos.b.text).toBe('placeholder b')
+
+    // TODO: Confirm that the new state IS NOT persisted
+  })
+
   it('Does an command', () => {
     const todoState = new TodoState(initialState)
     expect(todoState.state.todos.todo0.isComplete).toBe(false)
     todoState.toggleTodoComplete('todo0')
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
+
+    // TODO: Confirm that the new state IS persisted
   })
 
   it('Undoes an command', () => {
@@ -178,6 +213,8 @@ describe('State manager', () => {
     expect(todoState.state.todos.todo0.isComplete).toBe(false)
     todoState.undo()
     expect(todoState.state.todos.todo0.isComplete).toBe(false)
+
+    // TODO: Confirm that the new state IS persisted
   })
 
   it('Upgrades when the version changes', (done) => {
