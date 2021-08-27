@@ -14,6 +14,7 @@ export interface Command<T extends object> {
  * @param target The original complete object.
  * @param patch The deep partial to merge with the original object.
  */
+
 function merge<T>(target: T, patch: Patch<T>): T {
   const result: T = { ...target }
 

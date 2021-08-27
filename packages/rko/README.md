@@ -257,6 +257,8 @@ The saved snapshot. You can use the `snapshot` to restore earlier parts of the s
 
 [![Edit rko-example](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/rko-example-mf9cx?fontsize=14&hidenavigation=1&theme=dark)
 
+> ✍️ Want a bigger example? Check out the [perfect-freehand demo](https://codesandbox.io/s/github/steveruizok/perfect-freehand/tree/main/packages/dev).
+
 ## Support
 
 Please [open an issue](https://github.com/steveruizok/rko/issues/new) for support.
