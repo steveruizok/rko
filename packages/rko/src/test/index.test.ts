@@ -217,8 +217,39 @@ describe('State manager', () => {
     // TODO: Confirm that the new state IS persisted
   })
 
-  it('Upgrades when the version changes', (done) => {
-    const todoState1 = new TodoState(initialState, 'upgrade_test', 1)
+  it('Replaces when the version changes', (done) => {
+    const todoState1 = new TodoState(initialState, 'upgrade_test_1', 1)
+    todoState1.toggleTodoComplete('todo0')
+
+    expect(todoState1.state.todos.todo0.isComplete).toBe(true)
+
+    // Upgrade and remove the completed todos
+    const todoState2 = new TodoState(
+      {
+        ...initialState,
+        todos: {
+          ...initialState.todos,
+          todo3: {
+            ...initialState.todos.todo0,
+            text: 'Added in new initial state!',
+          },
+        },
+      },
+      'upgrade_test_1',
+      2
+    )
+
+    // Small timeout to allow for the idb promises to resolve
+    setTimeout(() => {
+      expect(todoState2.state.todos.todo3?.text).toBe(
+        'Added in new initial state!'
+      )
+      done()
+    }, 100)
+  })
+
+  it('Upgrades when the version changes if upgrade is provided', (done) => {
+    const todoState1 = new TodoState(initialState, 'upgrade_test_2', 1)
     todoState1.toggleTodoComplete('todo0')
 
     expect(todoState1.state.todos.todo0.isComplete).toBe(true)
@@ -226,7 +257,7 @@ describe('State manager', () => {
     // Upgrade and remove the completed todos
     const todoState2 = new TodoState(
       initialState,
-      'upgrade_test',
+      'upgrade_test_2',
       2,
       (prev) => {
         return {

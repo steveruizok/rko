@@ -32,7 +32,7 @@ export class StateManager<T extends object> {
   /**
    * An ID used to persist state in indexdb.
    */
-  private id: string
+  private id?: string
 
   /**
    * The initial state.
@@ -74,11 +74,19 @@ export class StateManager<T extends object> {
    */
   public status: 'loading' | 'ready' = 'loading'
 
+  constructor(initialState: T)
+  constructor(initialState: T, id: string)
   constructor(
     initialState: T,
-    id = 'react-state-manager',
-    version = 1,
-    update = (prev: T, next: T, prevVersion: number): T => next
+    id: string,
+    version: number,
+    update?: (prev: T, next: T, prevVersion: number) => T
+  )
+  constructor(
+    initialState: T,
+    id?: string,
+    version?: number,
+    update?: (prev: T, next: T, prevVersion: number) => T
   ) {
     this.id = id
     this._state = initialState
@@ -87,33 +95,47 @@ export class StateManager<T extends object> {
     this.store = createVanilla(() => initialState)
     this.useStore = create(this.store)
 
-    idb.get(this.id).then(async (saved) => {
-      if (saved) {
-        let next = saved
+    if (this.id) {
+      idb.get(this.id).then(async (saved) => {
+        if (saved) {
+          let next = saved
 
-        let savedVersion = await idb.get<number>(id + '_version')
+          if (version) {
+            let savedVersion = await idb.get<number>(id + '_version')
 
-        if (savedVersion && savedVersion < version) {
-          next = update(saved, initialState, savedVersion)
+            if (savedVersion && savedVersion < version) {
+              next = update
+                ? update(saved, initialState, savedVersion)
+                : initialState
+            }
+          }
+
+          await idb.set(id + '_version', version)
+
+          this._state = next
+          this.snapshot = next
+          this.initialState = next
+          this.status = 'ready'
+          this.store.setState(this._state, true)
+        } else {
+          if (version) {
+            idb.set(id + '_version', version)
+          }
         }
-
-        await idb.set(id + '_version', version)
-
-        this._state = next
-        this.snapshot = next
-        this.initialState = next
-        this.status = 'ready'
-        this.store.setState(this._state, true)
-      } else {
-        idb.set(id + '_version', version)
-      }
-    })
+      })
+    }
   }
 
   /**
    * Save the current state to indexdb.
    */
-  private persist = (): Promise<void> => idb.set(this.id, this._state)
+  private persist = (): void | Promise<void> => {
+    if (this.id) {
+      idb.set(this.id, this._state)
+    }
+
+    return
+  }
 
   /**
    * Apply a patch to the current state.
