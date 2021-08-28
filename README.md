@@ -59,7 +59,9 @@ Next, export an instance of the state. If you want to persist the state, give it
 export const myState = new MyState({ count: 0 }, 'my-state')
 ```
 
-In your React components, you can use the state's `useStore` hook to select out the data you need. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
+In your React components, you can use the state's `useStore` hook to select out the data you need. 
+
+> For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
 
 ```jsx
 // app.jsx
