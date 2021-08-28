@@ -1,5 +1,6 @@
-import create, { UseStore } from './zustanchen'
-import * as idb from './idbchen'
+import createVanilla, { StoreApi } from 'zustand/vanilla'
+import create, { UseStore } from 'zustand'
+import * as idb from 'idb-keyval'
 
 export type Patch<T> = Partial<{ [P in keyof T]: Patch<T[P]> }>
 
@@ -38,6 +39,11 @@ export class StateManager<T extends object> {
    * The initial state.
    */
   private initialState: T
+
+  /**
+   * A zustand store that also holds the state.
+   */
+  private store: StoreApi<T>
 
   /**
    * A stack of commands used for history (undo and redo_.
@@ -87,7 +93,8 @@ export class StateManager<T extends object> {
     this._state = initialState
     this.snapshot = initialState
     this.initialState = initialState
-    this.useStore = create(initialState)
+    this.store = createVanilla(() => initialState)
+    this.useStore = create(this.store)
 
     if (this.id) {
       idb.get(this.id).then(async (saved) => {
@@ -110,7 +117,7 @@ export class StateManager<T extends object> {
           this.snapshot = next
           this.initialState = next
           this._status = 'ready'
-          this.useStore.setState(this._state)
+          this.store.setState(this._state, true)
         } else {
           await idb.set(id + '_version', version || -1)
 
@@ -141,7 +148,7 @@ export class StateManager<T extends object> {
     const prev = this._state
     const next = merge(this._state, patch)
     this._state = this.cleanup(next, prev, patch)
-    this.useStore.setState(this._state)
+    this.store.setState(this._state, true)
     return this
   }
 
@@ -173,7 +180,7 @@ export class StateManager<T extends object> {
    */
   protected replaceState = (state: T): StateManager<T> => {
     this._state = this.cleanup(state, this._state, state)
-    this.useStore.setState(this._state)
+    this.store.setState(this._state, true)
     return this
   }
 
@@ -199,7 +206,7 @@ export class StateManager<T extends object> {
    */
   public reset = (): StateManager<T> => {
     this._state = this.initialState
-    this.useStore.setState(this.initialState)
+    this.store.setState(this.initialState, true)
     this.resetHistory()
     this.persist()
     return this
@@ -250,7 +257,7 @@ export class StateManager<T extends object> {
    * Force the zustand state to update.
    */
   public forceUpdate = () => {
-    this.useStore.setState(this._state)
+    this.store.setState(this._state, true)
   }
 
   /**
