@@ -230,7 +230,7 @@ Move forward in history, re-doing the previous undone change.
 
 #### `reset()`
 
-Reset the state to its original state. Also resets the history.
+Reset the state to its initial state (as provided in the constructor). This is not undoable. Calling `reset()` will also reset the history.
 
 #### `resetHistory()`
 
