@@ -473,9 +473,9 @@ Your `StateManager` sub-class is a regular class, so feel free to extend it with
 
 ### Examples
 
-[![Edit rko-example](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/rko-example-mf9cx?fontsize=14&hidenavigation=1&theme=dark)
-
-> ✍️ Want a bigger example? Check out the [perfect-freehand demo](https://codesandbox.io/s/github/steveruizok/perfect-freehand/tree/main/packages/dev).
+- [Todo List](https://codesandbox.io/s/rko-example-mf9cx)
+- [Tic Tac Toe](https://codesandbox.io/s/tic-tac-toe-j9v1l)
+- [perfect-freehand](https://codesandbox.io/s/github/steveruizok/perfect-freehand/tree/main/packages/dev)
 
 ## Support
 
