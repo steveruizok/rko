@@ -4110,13 +4110,6 @@ icss-utils@^5.0.0:
   resolved "https://registry.yarnpkg.com/icss-utils/-/icss-utils-5.1.0.tgz#c6be6858abd013d768e98366ae47e25d5887b1ae"
   integrity sha512-soFhflCVWLfRNOPU3iv5Z9VUdT44xFRbzjLsEzSr5AQmgqPMTHdU3PMT1Cf1ssx8fLNJDA1juftYl+PUcv3MqA==
 
-idb-keyval@^5.1.3:
-  version "5.1.3"
-  resolved "https://registry.yarnpkg.com/idb-keyval/-/idb-keyval-5.1.3.tgz#6ef5dff371897c23f144322dc6374eadd6a345d9"
-  integrity sha512-N9HbCK/FaXSRVI+k6Xq4QgWxbcZRUv+SfG1y7HJ28JdV8yEJu6k+C/YLea7npGckX2DQJeEVuMc4bKOBeU/2LQ==
-  dependencies:
-    safari-14-idb-fix "^1.0.4"
-
 iferr@^0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/iferr/-/iferr-0.1.5.tgz#c60eed69e6d8fdb6b3104a1fcbca1c192dc5b501"
@@ -8402,8 +8395,3 @@ yn@3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/yn/-/yn-3.1.1.tgz#1e87401a09d767c1d5eab26a6e4c185182d2eb50"
   integrity sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==
-
-zustand@^3.5.9:
-  version "3.5.10"
-  resolved "https://registry.yarnpkg.com/zustand/-/zustand-3.5.10.tgz#d2622efd64530ffda285ee5b13ff645b68ab0faf"
-  integrity sha512-upluvSRWrlCiExu2UbkuMIPJ9AigyjRFoO7O9eUossIj7rPPq7pcJ0NKk6t2P7KF80tg/UdPX6/pNKOSbs9DEg==
