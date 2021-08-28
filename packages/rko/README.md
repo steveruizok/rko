@@ -1,15 +1,19 @@
 ![logo](./rko-logo.svg)
 
-Out of nowhere! A state management library for React with built-in undo, redo, and persistence. Built on [Zustand](https://github.com/pmndrs/zustand). Demo [here](https://codesandbox.io/s/rko-example-mf9cx).
-
-💜 Like this? Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
+Out of nowhere! A state management library for React with built-in undo, redo, and persistence. Built on [Zustand](https://github.com/pmndrs/zustand).
 
 ![logo](./rko-logo-shadow.svg)
+
+🧑‍💻 Check out the [example project](https://codesandbox.io/s/rko-example-mf9cx).
+
+💜 Like this? Consider [becoming a sponsor](https://github.com/sponsors/steveruizok?frequency=recurring&sponsor=steveruizok).
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
+- [Advanced Usage](#advanced-usage)
+- [Examples](#examples)
 - [Support](#support)
 - [Discussion](#discussion)
 - [Author](#author)
@@ -28,22 +32,16 @@ yarn add rko
 
 ## Usage
 
-To use the library, first define your state as a class that extends `StateManager`.
+> 🧑‍🏫 Using TypeScript? See [here](#using-with-typescript) for additional docs.
+
+To use the library, first define your state as a class that extends `StateManager`. In your methods, you can use the `StateManager`'s [internal API](#internal-api) to update the state.
 
 ```ts
-// state.ts
-
+// state.js
 import { StateManager } from 'rko'
 
-// Define a type for your state
-interface State {
-  name: string
-  count: number
-}
-
-// Extend StateManager to define your state
-class MyState extends StateManager<State> {
-  adjustCount = (n: number) =>
+class MyState extends StateManager {
+  adjustCount = (n) =>
     this.setState({
       before: {
         count: this.state.count,
@@ -53,100 +51,106 @@ class MyState extends StateManager<State> {
       },
     })
 }
-
-// Create and export an instance of your state
-export const myState = new MyState(
-  {
-    name: 'Steve',
-    count: 0,
-  },
-  'my-state'
-)
 ```
 
-Then use the `useStore` hook to access the state. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it). You can also use your methods (e.g. `increment`) directly, as well as the `StateManager`'s built-in methods (e.g. `undo`, `redo` and `reset`).
+Next, export an instance of the state. If you want to persist the state, give it an `id`.
 
-```tsx
-// app.tsx
+```js
+export const myState = new MyState({ count: 0 }, 'my-state')
+```
+
+In your React components, you can use the state's `useStore` hook to select out the data you need. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
+
+```jsx
+// app.jsx
 import { myState } from './state'
 
-export default function App() {
-  // Select items from the zustand state
-  const { name } = myState.useStore((s) => s.name)
+function App() {
   const { count } = myState.useStore((s) => s.count)
-
-  // Call methods on the state
-  function increment() {
-    myState.adjustCount(1)
-  }
-
-  function decrement() {
-    myState.adjustCount(-1)
-  }
-
   return (
     <div>
-      <h1>Hello {name}</h1>
-      <h2>Count: {count}</h2>
-      <button onClick={increment}>Increment</button>
-      <button onClick={decrement}>Decrement</button>
-      <button onClick={myState.undo}>Undo</button>
-      <button onClick={myState.redo}>Redo</button>
-      <button onClick={myState.reset}>Reset</button>
+      <h1>{count}</h1>
     </div>
   )
 }
 ```
 
-## StateManager API
+You can also call your state's methods from your React components.
 
-You can use the `StateManager` class to create a state manager for your app. You will never use `StateManager` directly. Instead, you will extend the `StateManager` class and add methods that use its internal API in order to create a state manager for your particular app.
+```jsx
+function App() {
+  const { count } = myState.useStore((s) => s.count)
+
+  function increment() {
+    myState.adjustCount(1)
+  }
+
+  return (
+    <div>
+      <h1>{count}</h1>
+      <button onClick={increment}>Increment</button>
+    </div>
+  )
+}
+```
+
+...and you can use the `StateManager`'s [built-in methods](#public-api) too.
+
+```jsx
+function App() {
+  const { count } = myState.useStore((s) => s.count)
+
+  function increment() {
+    myState.adjustCount(1)
+  }
+
+  return (
+    <div>
+      <h1>{count}</h1>
+      <button onClick={increment}>Increment</button>
+      <button onClick={myState.undo}>Undo</button>
+      <button onClick={myState.redo}>Redo</button>
+    </div>
+  )
+}
+```
+
+Right on, you've got your global state.
+
+## StateManager
+
+The `rko` library exports a class named `StateManager` that you can extend to create a global state for your app. The methods you add to the class can access the `StateManager`'s [internal API](#internal-api).
 
 ```ts
-class AppState extends StateManager<State> {
-  // ...
-}
+import { StateManager } from 'rko'
 
-const initialState: State = {
+class AppState extends StateManager {
+  // your methods here
+}
+```
+
+You only need to create one instance of your `StateManager` sub-class. When you create the instance, pass an **initial state** object to its constructor.
+
+```ts
+const initialState = {
   // ...
 }
 
 export const appState = new AppState(initialState)
 ```
 
-When you create an instance of your `StateManager` sub-class, you pass in your initial state (an object). You can also pass in an `id` string, which will be used to persist the state.
+You can also use the constructor to:
 
-```ts
-export const appState = new AppState(initialState, 'todo-list')
-```
-
-You can _also_ pass in a version number and an "upgrade" function that will run if a lower version number is found. This function will receive the previous state, the new state, and the version number.
-
-```ts
-export const appState = new AppState(
-  initialState,
-  'todo-list',
-  2,
-  (prev, next, version) => {
-    return {
-      ...prev,
-      weather: 'cloudy',
-    }
-  }
-)
-```
-
-This is useful for migrating the persisted state when you add new properties or when certain properties are no longer needed.
+- [persist](#persisting-the-state) the state
+- [upgrade](#upgrading-the-persisted-state) a previously-persisted state.
 
 ### Internal API
 
-In your class definition, you can define methods that update your state using `StateManager`'s internal API.
+You can use `StateManager`'s internal API to update your state from within your your sub-class methods.
 
-#### `patchState(patch: Patch<T>)`
+#### `patchState(patch: Patch<State>)`
 
 Update the state without effecting the undo/redo stack. This method accepts a `Patch` type object, or a "deep partial" of the state object containing only the changes that you wish to make.
-
-Example:
 
 ```ts
 toggleMenuOpen = () =>
@@ -157,12 +161,12 @@ toggleMenuOpen = () =>
   })
 ```
 
-#### `setState(command: Command<T>)`
+#### `setState(command: Command<State>)`
 
 Update the state, push the command to the undo/redo stack, and persist the new state. This method accepts a `Command` type object containing two `Patch`es: `before` and `after`. The `after` patch should contain the changes to the state that you wish to make immediately and when the command is "re-done". The `before` patch should contain the changes to make when the command is "undone".
 
 ```ts
-adjustCount = (n: number) =>
+adjustCount = (n) =>
   this.setState({
     before: {
       count: this.state.count,
@@ -173,7 +177,7 @@ adjustCount = (n: number) =>
   })
 ```
 
-#### `replaceState(state: T)`
+#### `replaceState(state: State)`
 
 Works like `patchState` but accepts an entire state instead of a patch. This is useful for cases where a deep merge may be too expensive, such as changing items during a drag or scroll interaction. Note that, like `patchState`, this method will not effect the undo/redo stack. You might also want to call `resetHistory`.
 
@@ -186,16 +190,18 @@ loadNewTodos = (state: State) =>
   })
 ```
 
-#### `cleanup(next: T, prev: T, patch: Patch<T>)`
+#### `cleanup(next: State, prev: State, patch: Patch<State>)`
 
-The cleanup method is called on every state change, _after_ applying the current patch. It receives the next state, the previous state, and the patch that was just applied. It returns the "final" updated state. You can override this method in order to clean up any state that is no longer needed. For example, if you have a state that is a list of items, you can use the cleanup method to remove items that are no longer in the list. Note that the changes won't be present in the undo/redo stack.
+The cleanup method is called on every state change, _after_ applying the current patch. It receives the next state, the previous state, and the patch that was just applied. It returns the "final" updated state.
+
+You can override this method in order to clean up any state that is no longer needed. Note that the changes won't be present in the undo/redo stack.
 
 ```ts
 cleanup = (next: State) => {
   const final = { ...state }
 
   for (const id in todos) {
-    if (!todos[id]) {
+    if (todos[id] === 'undefined') {
       delete final.todos[id]
     }
   }
@@ -204,22 +210,11 @@ cleanup = (next: State) => {
 }
 ```
 
-You can also use the `cleanup` method to implement middleware or other functionality that needs to occur on each state change.
+You can also use the `cleanup` method to log changes or implement middleware (see [Using Middleware](#using-middleware)).
 
-```ts
-cleanup = (next: State, prev: State, patch: Patch<State>) => {
-  // Log an ID from the patch?
-  if (patch.patchId) {
-    logger.log(patch.patchId)
-  }
+#### `snapshot`
 
-  // Create a JSON patch and update the server?
-  const serverPatch = jsonpatch.compare(prev, state)
-  server.sendUpdate(clientId, serverPatch)
-
-  return next
-}
-```
+The most recently saved snapshot, or else the initial state if `setSnapshot` has not yet been called. You can use the `snapshot` to restore earlier parts of the state (see [Using Snapshots](#using-snapshots)). Readonly.
 
 ### Public API
 
@@ -235,7 +230,7 @@ Move forward in history, re-doing the previous undone change.
 
 #### `reset()`
 
-Reset the state to its original state. Also reset the history.
+Reset the state to its original state. Also resets the history.
 
 #### `resetHistory()`
 
@@ -247,13 +242,228 @@ Force the state to update.
 
 #### `setSnapshot()`
 
-Save the current state to the the `snapshot` property.
+Save the current state to the the `snapshot` property (see [Using Snapshots](#using-snapshots)).
 
-#### `snapshot`
+#### `useStore`
 
-The saved snapshot. You can use the `snapshot` to restore earlier parts of the state.
+The [zustand hook](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it) used to subscribe components to the state.
 
-### Example
+#### `state`
+
+The current state. Readonly.
+
+#### `status`
+
+The current status of the state: `ready` or `loading`. If restoring a persisted state, the state will briefly be `loading` while the state is being restored (see [Persisting the State](#persisting-the-state)). Readonly.
+
+## Advanced Usage
+
+### Using with TypeScript
+
+To use this library with TypeScript, define an interface for your state object and then use it as a generic when extending `StateManager`.
+
+```ts
+import { StateManager, Patch, Command } from 'rko'
+
+interface State {
+  name: string
+  count: number
+}
+
+class MyState extends StateManager<State> {
+  // ...
+}
+```
+
+Depending on how you're using the library (and your TypeScript config), you might also need the library's `Patch` and `Command` types. Both take your state interface as a generic.
+
+```ts
+cleanup = (next: State, prev: State, patch: Patch<State>) => {
+  log(patch)
+  return next
+}
+```
+
+#### Persisting the State
+
+To **persist** the state, pass an **id** string to the class constructor.
+
+```ts
+export const appState = new AppState({ count: 0 }, 'counter')
+```
+
+The library will now save a copy of the state after each new call to `setState`, `undo`, `redo`, or `reset`. The next time you create a new instance of your `StateManager` sub-class, it will restore the state from the persisted state.
+
+Because restoring a state is done _asynchronously_, the provided initial state will be used on your app's first render. To avoid a flash of content as the app loads, you can use the state's `status` property, which may be either `loading` or `ready`.
+
+```jsx
+function App() {
+  const { count } = myState.useStore((s) => s.count)
+
+  if (myState.status === 'loading') {
+    return null
+  }
+
+  return <h1>{count}</h1>
+}
+```
+
+#### Upgrading the Persisted State
+
+The constructor also accepts a version number. If you want to replace the persisted state, you can bump the version number.
+
+```ts
+const initialState = { wins: 0, losses: 0 }
+
+// Will persist state under the key 'game'
+export const appState = new AppState(initialState, 'game', 1)
+```
+
+By default, if the constructor finds a persisted state with the same id but a lower version number it will replace the persisted state with the initial state that you provide.
+
+```ts
+const initialState = { wins: 0, losses: 0, score: 0 }
+
+// Will replace any previous 'game' state with a version < 2
+export const appState = new AppState(initialState, 'game', 2)
+```
+
+If you want to migrate or "upgrade" the earlier persisted state instead, you can pass a function that will receive the previous state, the new state, and the previous version number, and return the new state for this version.
+
+```ts
+const initialState = { wins: 0, losses: 0, score: 0 }
+
+export const appState = new AppState(
+  initialState,
+  'game',
+  2,
+  (prev, next, version) => ({
+    ...prev,
+    score: prev.wins * 10,
+  })
+)
+```
+
+Note that this "upgrade" function will only run when an earlier version is found on the user's machine under the provided key.
+
+### Using Middleware
+
+To use middleware or run side effects when the state changes, override the [`cleanup`](#cleanup) method in your `StateManager` sub-class.
+
+```ts
+cleanup = (next, prev, patch) => {
+  // Log an ID from the patch?
+  if (patch.patchId) {
+    logger.log(patch.patchId)
+  }
+
+  // Create a JSON patch and update the server?
+  const serverPatch = jsonpatch.compare(prev, state)
+  server.sendUpdate(clientId, serverPatch)
+
+  return next
+}
+```
+
+Remember that `cleanup` runs _before_ the new state is passed to the zustand store. Your components will not yet have received the new state.
+
+### Using Snapshots
+
+Depending on your application, you may need to restore data from an earlier state. You can use the `snapshot` property and `setSnapshot` method to make this easier.
+
+For example, if a user is was editing a todo's text, they would likely want to "undo" back to the text as it was before they began editing, and "redo" to the text as it was when they finished editing.
+
+To do this, you would call `setSnapshot` when the user focuses the text input, in order to preserve the state before the user begins typing.
+
+```js
+beginEditingTodo = () => {
+  this.setSnapshot()
+}
+```
+
+As the user types, you would call `patchState` in order to change the state without effecting the undo/redo stack.
+
+```js
+editTodoText = (id, text) => {
+  this.patchState({
+    todos: {
+      [id]: { text: state.todos[id].text },
+    },
+  })
+}
+```
+
+Finally, when the user finishes or blurs the text input, you would call `setState` to create a new command—and in that command, using the `snapshot` info in the command's `before` patch.
+
+```js
+finishEditing = (id) => {
+  const { state, snapshot } = this
+
+  this.setState({
+    before: {
+      todos: {
+        [id]: { text: snapshot.todos[id].text },
+      },
+    },
+    after: {
+      todos: {
+        [id]: { text: state.todos[id].text },
+      },
+    },
+  })
+}
+```
+
+### Testing
+
+You can using a library like [jest](https://jestjs.io/) to test your `rko` state. In addition to testing your React components, you can also test your state in isolation.
+
+One way to test is by importing your `StateManager` sub-class and creating new instances for each test.
+
+```js
+// state.test.js
+
+import { MyState } from './state'
+
+describe('My State', () => {
+  it('Increments the count (do, undo and redo)', () => {
+    const myState = new MyState({ count: 0 })
+    myState.adustCount(1)
+    expect(myState.state.count).toBe(1)
+    myState.undo()
+    expect(myState.state.count).toBe(0)
+    myState.redo()
+    expect(myState.state.count).toBe(1)
+  })
+})
+```
+
+Alternatively, you can import your sub-class instance and use the `reset` method between tests to restore the initial state.
+
+```js
+// state.test.js
+
+import { myState } from './state'
+
+describe('My State', () => {
+  it('Increments the count', () => {
+    myState.adustCount(1)
+    expect(myState.state.count).toBe(1)
+  })
+
+  it('Decrements the count', () => {
+    myState.reset()
+    myState.adustCount(-1)
+    expect(myState.state.count).toBe(-1)
+  })
+})
+```
+
+### Tips
+
+Your `StateManager` sub-class is a regular class, so feel free to extend it with other properties and methods that your methods can rely on. For example, you might want multiple snapshots, a more complex `status`, or asynchronous behaviors.
+
+### Examples
 
 [![Edit rko-example](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/rko-example-mf9cx?fontsize=14&hidenavigation=1&theme=dark)
 

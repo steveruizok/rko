@@ -73,7 +73,7 @@ export class StateManager<T extends object> {
   /**
    * The state manager's current status, with regard to restoring persisted state.
    */
-  public status: 'loading' | 'ready' = 'loading'
+  public readonly status: 'loading' | 'ready' = 'loading'
 
   constructor(initialState: T)
   constructor(initialState: T, id: string)
@@ -111,7 +111,7 @@ export class StateManager<T extends object> {
             }
           }
 
-          await idb.set(id + '_version', version)
+          await idb.set(id + '_version', version || -1)
 
           this._state = next
           this.snapshot = next
@@ -119,9 +119,9 @@ export class StateManager<T extends object> {
           this.status = 'ready'
           this.store.setState(this._state, true)
         } else {
-          if (version) {
-            idb.set(id + '_version', version)
-          }
+          await idb.set(id + '_version', version || -1)
+
+          this.status = 'ready'
         }
       })
     }
