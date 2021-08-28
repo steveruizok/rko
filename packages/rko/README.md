@@ -256,6 +256,14 @@ The current state. Readonly.
 
 The current status of the state: `ready` or `loading`. If restoring a persisted state, the state will briefly be `loading` while the state is being restored (see [Persisting the State](#persisting-the-state)). Readonly.
 
+#### `canUndo`
+
+Whether the state can undo, given its undo/redo stack. Readonly.
+
+#### `canRedo`
+
+Whether the state can redo, given its undo/redo stack. Readonly.
+
 ## Advanced Usage
 
 ### Using with TypeScript

@@ -1,4 +1,5 @@
 import { StateManager } from '../index'
+import { del } from 'idb-keyval'
 
 export interface Todo {
   id: string
@@ -9,6 +10,7 @@ export interface Todo {
 
 export interface State {
   todos: Record<string, Todo>
+  items: string[]
 }
 
 export class TodoState extends StateManager<State> {
@@ -112,6 +114,18 @@ export class TodoState extends StateManager<State> {
   loadTodos = (state: State) => {
     return this.replaceState(state)
   }
+
+  addItem = () => {
+    const before = [...this.state.items]
+
+    // Bad! Mutation!
+    this.state.items.push('a')
+
+    return this.setState({
+      before: { items: before },
+      after: { items: this.state.items },
+    })
+  }
 }
 
 const initialState: State = {
@@ -129,6 +143,7 @@ const initialState: State = {
       dateCreated: 1629275340560,
     },
   },
+  items: [],
 }
 
 describe('State manager', () => {
@@ -137,15 +152,17 @@ describe('State manager', () => {
   })
 
   it('Patches the state', () => {
-    const todoState = new TodoState(initialState)
+    del('t0')
+    const todoState = new TodoState(initialState, 't0')
     todoState.patchTodoText('todo0', 'hello world')
     expect(todoState.state.todos.todo0.text).toBe('hello world')
     todoState.undo()
     expect(todoState.state.todos.todo0.text).toBe('hello world')
   })
 
-  it('Replaces the state', () => {
-    const todoState = new TodoState(initialState)
+  it('Replaces the state', (done) => {
+    del('t0')
+    const todoState = new TodoState(initialState, 't0')
     todoState.loadTodos({
       todos: {
         a: {
@@ -161,60 +178,111 @@ describe('State manager', () => {
           dateCreated: 1629575640560,
         },
       },
+      items: [],
     })
     expect(todoState.state.todos.todo0).toBe(undefined)
     expect(todoState.state.todos.todo1).toBe(undefined)
     expect(todoState.state.todos.a.text).toBe('placeholder a')
     expect(todoState.state.todos.b.text).toBe('placeholder b')
 
-    // TODO: Confirm that the new state IS NOT persisted
+    // Does NOT persist state
+    const todoState2 = new TodoState(initialState, 't0')
+    setTimeout(() => {
+      expect(todoState2.state.todos.todo0.isComplete).toBe(false)
+      done()
+    }, 100)
   })
 
-  it('Does an command', () => {
-    const todoState = new TodoState(initialState)
+  it('Does an command', (done) => {
+    del('t0')
+    const todoState = new TodoState(initialState, 't0')
     expect(todoState.state.todos.todo0.isComplete).toBe(false)
     todoState.toggleTodoComplete('todo0')
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
 
-    // TODO: Confirm that the new state IS persisted
+    // Persists state
+    const todoState2 = new TodoState(initialState, 't0')
+    setTimeout(() => {
+      expect(todoState2.state.todos.todo0.isComplete).toBe(true)
+      done()
+    }, 100)
   })
 
-  it('Undoes an command', () => {
-    const todoState = new TodoState(initialState)
+  it('Undoes an command', (done) => {
+    del('t0')
+    const todoState = new TodoState(initialState, 't0')
     todoState.toggleTodoComplete('todo0')
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
     todoState.undo()
     expect(todoState.state.todos.todo0.isComplete).toBe(false)
+
+    const todoState2 = new TodoState(initialState, 't0')
+    setTimeout(() => {
+      expect(todoState2.state.todos.todo0.isComplete).toBe(false)
+      done()
+    }, 100)
   })
 
-  it('Redoes an command', () => {
-    const todoState = new TodoState(initialState)
+  it('Redoes an command', (done) => {
+    del('t0')
+    const todoState = new TodoState(initialState, 't0')
     todoState.toggleTodoComplete('todo0')
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
     todoState.undo()
     todoState.redo()
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
+
+    const todoState2 = new TodoState(initialState, 't0')
+    setTimeout(() => {
+      expect(todoState2.state.todos.todo0.isComplete).toBe(true)
+      done()
+    }, 100)
   })
 
-  it('Resets the history', () => {
-    const todoState = new TodoState(initialState)
+  it('Resets the history', (done) => {
+    del('t0')
+    const todoState = new TodoState(initialState, 't0')
     todoState.toggleTodoComplete('todo0')
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
     todoState.resetHistory()
     todoState.undo()
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
+
+    const todoState2 = new TodoState(initialState, 't0')
+    setTimeout(() => {
+      expect(todoState2.state.todos.todo0.isComplete).toBe(true)
+      done()
+    }, 100)
   })
 
-  it('Resets the state', () => {
-    const todoState = new TodoState(initialState)
+  it('Resets the state', (done) => {
+    del('t0')
+    const todoState = new TodoState(initialState, 't0')
     todoState.toggleTodoComplete('todo0')
     expect(todoState.state.todos.todo0.isComplete).toBe(true)
-    todoState.reset()
-    expect(todoState.state.todos.todo0.isComplete).toBe(false)
-    todoState.undo()
-    expect(todoState.state.todos.todo0.isComplete).toBe(false)
 
-    // TODO: Confirm that the new state IS persisted
+    const todoState1 = new TodoState(initialState, 't0')
+    todoState1.toggleTodoComplete('todo0')
+    expect(todoState1.state.todos.todo0.isComplete).toBe(true)
+    todoState1.reset()
+
+    // The state should be reset
+    expect(todoState1.state.todos.todo0.isComplete).toBe(false)
+
+    // Undo and redo should be false
+    expect(todoState1.canUndo).toBe(false)
+    expect(todoState1.canRedo).toBe(false)
+
+    // The reset should not be undoable
+    todoState1.undo()
+    expect(todoState1.state.todos.todo0.isComplete).toBe(false)
+
+    // The reset state should be persisted
+    const todoState2 = new TodoState(initialState, 't0')
+    setTimeout(() => {
+      expect(todoState2.state.todos.todo0.isComplete).toBe(false)
+      done()
+    }, 100)
   })
 
   it('Replaces when the version changes', (done) => {
@@ -268,6 +336,7 @@ describe('State manager', () => {
                 .map(([id, todo]) => [id, todo])
             ),
           },
+          items: prev.items,
         }
       }
     )
@@ -277,5 +346,36 @@ describe('State manager', () => {
       expect(Object.values(todoState2.state.todos).length).toBe(1)
       done()
     }, 100)
+  })
+
+  it('Correctly sets canUndo', () => {
+    const state = new TodoState(initialState)
+    expect(state.canUndo).toBe(false)
+    state.toggleTodoComplete('todo0')
+    expect(state.canUndo).toBe(true)
+    state.undo()
+    expect(state.canUndo).toBe(false)
+    state.reset()
+    expect(state.canUndo).toBe(false)
+  })
+
+  it('Correctly sets canRedo', () => {
+    const state = new TodoState(initialState)
+    expect(state.canRedo).toBe(false)
+    state.toggleTodoComplete('todo0')
+    state.undo()
+    expect(state.canRedo).toBe(true)
+    state.redo()
+    expect(state.canRedo).toBe(false)
+    state.reset()
+    expect(state.canRedo).toBe(false)
+  })
+
+  it('Correctly resets, even with mutations.', () => {
+    const state = new TodoState(initialState)
+    state.addItem()
+    expect(state.state.items.length).toBe(1)
+    state.reset()
+    expect(state.state.items.length).toBe(0)
   })
 })

@@ -1,33 +1,9 @@
 import createVanilla, { StoreApi } from 'zustand/vanilla'
 import create, { UseStore } from 'zustand'
 import * as idb from 'idb-keyval'
-
-export type Patch<T> = Partial<{ [P in keyof T]: Patch<T[P]> }>
-
-export interface Command<T extends object> {
-  before: Patch<T>
-  after: Patch<T>
-}
-
-/**
- * Recursively merge an object with a deep partial of the same type.
- * @param target The original complete object.
- * @param patch The deep partial to merge with the original object.
- */
-
-function merge<T>(target: T, patch: Patch<T>): T {
-  const result: T = { ...target }
-
-  const entries = Object.entries(patch) as [keyof T, T[keyof T]][]
-
-  for (const [key, value] of entries)
-    result[key] =
-      value === Object(value) && !Array.isArray(value)
-        ? merge(result[key], value)
-        : value
-
-  return result
-}
+import { deepCopy } from './copy'
+import { merge } from './merge'
+import type { Patch, Command } from './types'
 
 export class StateManager<T extends object> {
   /**
@@ -68,7 +44,7 @@ export class StateManager<T extends object> {
   /**
    * A snapshot of the current state.
    */
-  protected snapshot: T
+  protected _snapshot: T
 
   /**
    * A React hook for accessing the zustand store.
@@ -90,10 +66,10 @@ export class StateManager<T extends object> {
     update?: (prev: T, next: T, prevVersion: number) => T
   ) {
     this.id = id
-    this._state = initialState
-    this.snapshot = initialState
-    this.initialState = initialState
-    this.store = createVanilla(() => initialState)
+    this._state = deepCopy(initialState)
+    this._snapshot = deepCopy(initialState)
+    this.initialState = deepCopy(initialState)
+    this.store = createVanilla(() => this._state)
     this.useStore = create(this.store)
 
     if (this.id) {
@@ -113,9 +89,8 @@ export class StateManager<T extends object> {
 
           await idb.set(id + '_version', version || -1)
 
-          this._state = next
-          this.snapshot = next
-          this.initialState = next
+          this._state = deepCopy(next)
+          this._snapshot = deepCopy(next)
           this._status = 'ready'
           this.store.setState(this._state, true)
         } else {
@@ -249,7 +224,7 @@ export class StateManager<T extends object> {
    * Save a snapshot of the current state, accessible at `this.snapshot`.
    */
   public setSnapshot = (): StateManager<T> => {
-    this.snapshot = { ...this._state }
+    this._snapshot = { ...this._state }
     return this
   }
 
@@ -263,28 +238,35 @@ export class StateManager<T extends object> {
   /**
    * Get whether the state manager can undo.
    */
-  get canUndo(): boolean {
+  public get canUndo(): boolean {
     return this.pointer > -1
   }
 
   /**
    * Get whether the state manager can redo.
    */
-  get canRedo(): boolean {
+  public get canRedo(): boolean {
     return this.pointer < this.stack.length - 1
   }
 
   /**
    * The current state.
    */
-  get state(): T {
+  public get state(): T {
     return this._state
   }
 
   /**
    * The current status.
    */
-  get status(): string {
+  public get status(): string {
     return this._status
+  }
+
+  /**
+   * The most-recent snapshot.
+   */
+  protected get snapshot(): T {
+    return this._snapshot
   }
 }
