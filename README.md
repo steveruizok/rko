@@ -292,7 +292,7 @@ cleanup = (next: State, prev: State, patch: Patch<State>) => {
 }
 ```
 
-#### Persisting the State
+### Persisting the State
 
 To **persist** the state, pass an **id** string to the class constructor.
 
@@ -316,7 +316,7 @@ function App() {
 }
 ```
 
-#### Upgrading the Persisted State
+### Upgrading the Persisted State
 
 The constructor also accepts a version number. If you want to replace the persisted state, you can bump the version number.
 
@@ -467,11 +467,11 @@ describe('My State', () => {
 })
 ```
 
-### Tips
+## Tips
 
 Your `StateManager` sub-class is a regular class, so feel free to extend it with other properties and methods that your methods can rely on. For example, you might want multiple snapshots, a more complex `status`, or asynchronous behaviors.
 
-### Examples
+## Examples
 
 - [Todo List](https://codesandbox.io/s/rko-example-mf9cx)
 - [Tic Tac Toe](https://codesandbox.io/s/tic-tac-toe-j9v1l)
