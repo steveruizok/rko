@@ -61,6 +61,11 @@ export class StateManager<T extends object> {
   private _state: T
 
   /**
+   * The state manager's current status, with regard to restoring persisted state.
+   */
+  private _status: 'loading' | 'ready' = 'loading'
+
+  /**
    * A snapshot of the current state.
    */
   protected snapshot: T
@@ -69,11 +74,6 @@ export class StateManager<T extends object> {
    * A React hook for accessing the zustand store.
    */
   public readonly useStore: UseStore<T>
-
-  /**
-   * The state manager's current status, with regard to restoring persisted state.
-   */
-  public readonly status: 'loading' | 'ready' = 'loading'
 
   constructor(initialState: T)
   constructor(initialState: T, id: string)
@@ -116,12 +116,12 @@ export class StateManager<T extends object> {
           this._state = next
           this.snapshot = next
           this.initialState = next
-          this.status = 'ready'
+          this._status = 'ready'
           this.store.setState(this._state, true)
         } else {
           await idb.set(id + '_version', version || -1)
 
-          this.status = 'ready'
+          this._status = 'ready'
         }
       })
     }
@@ -279,5 +279,12 @@ export class StateManager<T extends object> {
    */
   get state(): T {
     return this._state
+  }
+
+  /**
+   * The current status.
+   */
+  get status(): string {
+    return this._status
   }
 }
