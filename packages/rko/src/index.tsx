@@ -175,13 +175,16 @@ export class StateManager<T extends object> {
    * @param id An id for this change.
    */
   protected replaceState = (state: T, id?: string): this => {
-    this._state = this.cleanup(
+    const final = this.cleanup(
       state,
       this._state,
       state,
       id ? 'replace:' + id : 'replace'
     )
+    this.onStateWillChange(final, id ? 'replace:' + id : 'replace')
+    this._state = final
     this.store.setState(this._state, true)
+    this.onStateDidChange(this._state, id ? 'replace:' + id : 'replace')
     return this
   }
 
