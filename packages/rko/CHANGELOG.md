@@ -1,5 +1,10 @@
 # rko
 
+## 0.5.18
+
+- Fix export bugs related to esm
+- Adds `Patch` and `Command` type exports
+
 ## 0.5.16
 
 - Adds missing calls to `onStateWillChange` and `onStateDidChange` during `replaceState`.
