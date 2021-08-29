@@ -59,9 +59,7 @@ Next, export an instance of the state. If you want to persist the state, give it
 export const myState = new MyState({ count: 0 }, 'my-state')
 ```
 
-In your React components, you can use the state's `useStore` hook to select out the data you need. 
-
-> For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
+In your React components, you can use the state's `useStore` hook to select out the data you need. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
 
 ```jsx
 // app.jsx
@@ -150,7 +148,7 @@ You can also use the constructor to:
 
 You can use `StateManager`'s internal API to update your state from within your your sub-class methods.
 
-#### `patchState(patch: Patch<State>)`
+#### `patchState(patch: Patch<State>, id?: string)`
 
 Update the state without effecting the undo/redo stack. This method accepts a `Patch` type object, or a "deep partial" of the state object containing only the changes that you wish to make.
 
@@ -163,7 +161,7 @@ toggleMenuOpen = () =>
   })
 ```
 
-#### `setState(command: Command<State>)`
+#### `setState(command: Command<State>, id?: string)`
 
 Update the state, push the command to the undo/redo stack, and persist the new state. This method accepts a `Command` type object containing two `Patch`es: `before` and `after`. The `after` patch should contain the changes to the state that you wish to make immediately and when the command is "re-done". The `before` patch should contain the changes to make when the command is "undone".
 
@@ -179,11 +177,9 @@ adjustCount = (n) =>
   })
 ```
 
-#### `replaceState(state: State)`
+#### `replaceState(state: State, id?: string)`
 
 Works like `patchState` but accepts an entire state instead of a patch. This is useful for cases where a deep merge may be too expensive, such as changing items during a drag or scroll interaction. Note that, like `patchState`, this method will not effect the undo/redo stack. You might also want to call `resetHistory`.
-
-Example:
 
 ```ts
 loadNewTodos = (state: State) =>
@@ -212,7 +208,19 @@ cleanup = (next: State) => {
 }
 ```
 
-You can also use the `cleanup` method to log changes or implement middleware (see [Using Middleware](#using-middleware)).
+You can also use your `cleanup` method override to log changes or implement middleware (see [Using Middleware](#using-middleware)).
+
+#### `onStateDidChange(state: State, id: string)`
+
+The `onStateDidChange` method is called after each state change. You can override this method to log changes or implement middleware (see [Using Middleware](#using-middleware)).
+
+```ts
+onStateDidChange = (state: State, id: string) => {
+  console.log(id)
+}
+```
+
+The `id` argument will be either `patch`, `command`, `undo`, `redo`, or `reset`. If an `id` argument was provided with the call that prompted the change (e.g. `setState(command, "myCommand"`) then that `id` will be available as the method's second parameter (e.g. `undo:myCommand`).
 
 #### `snapshot`
 
@@ -294,7 +302,7 @@ cleanup = (next: State, prev: State, patch: Patch<State>) => {
 }
 ```
 
-### Persisting the State
+#### Persisting the State
 
 To **persist** the state, pass an **id** string to the class constructor.
 
@@ -318,7 +326,7 @@ function App() {
 }
 ```
 
-### Upgrading the Persisted State
+#### Upgrading the Persisted State
 
 The constructor also accepts a version number. If you want to replace the persisted state, you can bump the version number.
 
@@ -469,11 +477,11 @@ describe('My State', () => {
 })
 ```
 
-## Tips
+### Tips
 
 Your `StateManager` sub-class is a regular class, so feel free to extend it with other properties and methods that your methods can rely on. For example, you might want multiple snapshots, a more complex `status`, or asynchronous behaviors.
 
-## Examples
+### Examples
 
 - [Todo List](https://codesandbox.io/s/rko-example-mf9cx)
 - [Tic Tac Toe](https://codesandbox.io/s/tic-tac-toe-j9v1l)
