@@ -1,11 +1,11 @@
 # rko
 
-## 0.5.14
+## 0.5.15
 
 - Adds `onStateWillChange`
 - Adds tests for `onStateWillChange`
 
-## 0.5.13
+## 0.5.14
 
 - Adds `onStateDidChange`
 - Adds tests for `onStateDidChange`
