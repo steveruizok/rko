@@ -51,14 +51,6 @@ export class StateManager<T extends object> {
    */
   public readonly useStore: UseStore<T>
 
-  constructor(initialState: T)
-  constructor(initialState: T, id: string)
-  constructor(
-    initialState: T,
-    id: string,
-    version: number,
-    update?: (prev: T, next: T, prevVersion: number) => T
-  )
   constructor(
     initialState: T,
     id?: string,
@@ -117,13 +109,15 @@ export class StateManager<T extends object> {
    * Apply a patch to the current state.
    * This does not effect the undo/redo stack.
    * This does not persist the state.
-   * @param patch
+   * @param patch The patch to apply.
+   * @param id (optional) An id for the patch.
    */
-  private applyPatch = (patch: Patch<T>) => {
+  private applyPatch = (patch: Patch<T>, id: string) => {
     const prev = this._state
     const next = merge(this._state, patch)
-    this._state = this.cleanup(next, prev, patch)
+    this._state = this.cleanup(next, prev, patch, id)
     this.store.setState(this._state, true)
+    this.onStateDidChange(this._state, id)
     return this
   }
 
@@ -132,18 +126,34 @@ export class StateManager<T extends object> {
   /**
    * Perform any last changes to the state before updating.
    * Override this on your extending class.
-   * @param state
+   * @param state The next state.
+   * @param prevState The previous state.
+   * @param patch The patch that was just applied.
+   * @param id (optional) An id for the just-applied patch.
    */
-  protected cleanup = (state: T, prevState: T, patch: Patch<T>): T => state
+  protected cleanup = (
+    state: T,
+    prevState: T,
+    patch: Patch<T>,
+    id?: string
+  ): T => state
+
+  /**
+   * A life-cycle method called when the state has changed.
+   * @param state The next state.
+   * @param id An id for the change.
+   */
+  protected onStateDidChange = (state: T, id: string): void => {}
 
   /**
    * Apply a patch to the current state.
    * This does not effect the undo/redo stack.
    * This does not persist the state.
    * @param patch The patch to apply.
+   * @param id (optional) An id for this patch.
    */
-  protected patchState = (patch: Patch<T>): StateManager<T> => {
-    this.applyPatch(patch)
+  protected patchState = (patch: Patch<T>, id?: string): this => {
+    this.applyPatch(patch, id ? 'patch:' + id : 'patch')
     return this
   }
 
@@ -152,9 +162,15 @@ export class StateManager<T extends object> {
    * This does not effect the undo/redo stack.
    * This does not persist the state.
    * @param state The new state.
+   * @param id An id for this change.
    */
-  protected replaceState = (state: T): StateManager<T> => {
-    this._state = this.cleanup(state, this._state, state)
+  protected replaceState = (state: T, id?: string): this => {
+    this._state = this.cleanup(
+      state,
+      this._state,
+      state,
+      id ? 'replace:' + id : 'replace'
+    )
     this.store.setState(this._state, true)
     return this
   }
@@ -164,12 +180,13 @@ export class StateManager<T extends object> {
    * This effects the undo/redo stack.
    * This persists the state.
    * @param command The command to apply and add to the undo/redo stack.
+   * @param id (optional) An id for this command.
    */
-  protected setState = (command: Command<T>): StateManager<T> => {
+  protected setState = (command: Command<T>, id?: string) => {
     this.pointer++
     this.stack = this.stack.slice(0, this.pointer)
-    this.stack.push(command)
-    this.applyPatch(command.after)
+    this.stack.push({ id, ...command })
+    this.applyPatch(command.after, id ? 'command:' + id : 'command')
     this.persist()
     return this
   }
@@ -179,18 +196,19 @@ export class StateManager<T extends object> {
   /**
    * Reset the state to the initial state and reset history.
    */
-  public reset = (): StateManager<T> => {
+  public reset = () => {
     this._state = this.initialState
     this.store.setState(this.initialState, true)
     this.resetHistory()
     this.persist()
+    this.onStateDidChange(this._state, 'reset')
     return this
   }
 
   /**
    * Reset the history stack (without resetting the state).
    */
-  public resetHistory = (): StateManager<T> => {
+  public resetHistory = (): this => {
     this.stack = []
     this.pointer = -1
     return this
@@ -199,11 +217,11 @@ export class StateManager<T extends object> {
   /**
    * Move backward in the undo/redo stack.
    */
-  public undo = (): StateManager<T> => {
+  public undo = (): this => {
     if (!this.canUndo) return this
     const command = this.stack[this.pointer]
     this.pointer--
-    this.applyPatch(command.before)
+    this.applyPatch(command.before, command.id ? `undo:${command.id}` : 'undo')
     this.persist()
     return this
   }
@@ -211,11 +229,11 @@ export class StateManager<T extends object> {
   /**
    * Move forward in the undo/redo stack.
    */
-  public redo = (): StateManager<T> => {
+  public redo = (): this => {
     if (!this.canRedo) return this
     this.pointer++
     const command = this.stack[this.pointer]
-    this.applyPatch(command.after)
+    this.applyPatch(command.after, command.id ? `redo:${command.id}` : 'redo')
     this.persist()
     return this
   }
@@ -223,7 +241,7 @@ export class StateManager<T extends object> {
   /**
    * Save a snapshot of the current state, accessible at `this.snapshot`.
    */
-  public setSnapshot = (): StateManager<T> => {
+  public setSnapshot = (): this => {
     this._snapshot = { ...this._state }
     return this
   }

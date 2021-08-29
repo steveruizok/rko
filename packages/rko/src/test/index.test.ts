@@ -14,7 +14,13 @@ export interface State {
 }
 
 export class TodoState extends StateManager<State> {
+  log: string[] = []
+
   // Internal API -------------------------
+
+  protected onStateDidChange = (state: State, id: string) => {
+    this.log.push(id)
+  }
 
   protected cleanup = (state: State) => {
     Object.entries(state.todos).forEach(([id, todo]) => {
@@ -32,19 +38,22 @@ export class TodoState extends StateManager<State> {
   createTodo = () => {
     const id = Date.now().toString()
 
-    return this.setState({
-      before: { todos: { [id]: undefined } },
-      after: {
-        todos: {
-          [id]: {
-            id,
-            text: '',
-            isComplete: false,
-            dateCreated: new Date().getTime(),
+    return this.setState(
+      {
+        before: { todos: { [id]: undefined } },
+        after: {
+          todos: {
+            [id]: {
+              id,
+              text: '',
+              isComplete: false,
+              dateCreated: new Date().getTime(),
+            },
           },
         },
       },
-    })
+      'create_todo'
+    )
   }
 
   /**
@@ -54,10 +63,13 @@ export class TodoState extends StateManager<State> {
   toggleTodoComplete = (id: string) => {
     const todo = this.state.todos[id]
 
-    return this.setState({
-      before: { todos: { [id]: { isComplete: todo.isComplete } } },
-      after: { todos: { [id]: { isComplete: !todo.isComplete } } },
-    })
+    return this.setState(
+      {
+        before: { todos: { [id]: { isComplete: todo.isComplete } } },
+        after: { todos: { [id]: { isComplete: !todo.isComplete } } },
+      },
+      'toggle_todo'
+    )
   }
 
   /**
@@ -66,9 +78,12 @@ export class TodoState extends StateManager<State> {
    * @param text The todo's new text.
    */
   patchTodoText = (id: string, text: string) => {
-    return this.patchState({
-      todos: { [id]: { text } },
-    })
+    return this.patchState(
+      {
+        todos: { [id]: { text } },
+      },
+      'update_todo_text'
+    )
   }
 
   /**
@@ -82,10 +97,13 @@ export class TodoState extends StateManager<State> {
     // Don't update if text is the same as the original text
     if (text === todo.text) return this
 
-    return this.setState({
-      before: { todos: { [id]: { text: todo.text } } },
-      after: { todos: { [id]: { text } } },
-    })
+    return this.setState(
+      {
+        before: { todos: { [id]: { text: todo.text } } },
+        after: { todos: { [id]: { text } } },
+      },
+      'set_todo_text'
+    )
   }
 
   /**
@@ -96,23 +114,26 @@ export class TodoState extends StateManager<State> {
       (todo) => todo.isComplete
     )
 
-    return this.setState({
-      before: {
-        todos: Object.fromEntries(completed.map((todo) => [todo.id, todo])),
+    return this.setState(
+      {
+        before: {
+          todos: Object.fromEntries(completed.map((todo) => [todo.id, todo])),
+        },
+        after: {
+          todos: Object.fromEntries(
+            completed.map((todo) => [todo.id, undefined])
+          ),
+        },
       },
-      after: {
-        todos: Object.fromEntries(
-          completed.map((todo) => [todo.id, undefined])
-        ),
-      },
-    })
+      'clear_completed'
+    )
   }
 
   /**
    * Load an entirely new state.
    */
   loadTodos = (state: State) => {
-    return this.replaceState(state)
+    return this.replaceState(state, 'load_todos')
   }
 
   addItem = () => {
@@ -121,10 +142,13 @@ export class TodoState extends StateManager<State> {
     // Bad! Mutation!
     this.state.items.push('a')
 
-    return this.setState({
-      before: { items: before },
-      after: { items: this.state.items },
-    })
+    return this.setState(
+      {
+        before: { items: before },
+        after: { items: this.state.items },
+      },
+      'add_item'
+    )
   }
 }
 
@@ -377,5 +401,27 @@ describe('State manager', () => {
     expect(state.state.items.length).toBe(1)
     state.reset()
     expect(state.state.items.length).toBe(0)
+  })
+
+  it('Calls onStateDidChange', () => {
+    const state = new TodoState(initialState)
+    state
+      .addItem()
+      .toggleTodoComplete('todo0')
+      .toggleTodoComplete('todo0')
+      .patchTodoText('todo0', 'hey')
+      .undo()
+      .redo()
+      .reset()
+
+    expect(state.log).toStrictEqual([
+      'command:add_item',
+      'command:toggle_todo',
+      'command:toggle_todo',
+      'patch:update_todo_text',
+      'undo:toggle_todo',
+      'redo:toggle_todo',
+      'reset',
+    ])
   })
 })

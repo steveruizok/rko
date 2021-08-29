@@ -2,6 +2,12 @@
 
 ## 0.5.13
 
+- Adds `onStateDidChange`
+- Adds `id` to `Command` (optional)
+- Adds `id` parameter (optional) to methods that change state
+
+## 0.5.13
+
 - Updates `resetState` so that it returns to the provided initial state, rather than the restored persisted state.
 - Deep copies the initial state (or restored persisted state) to prevent clashes from mutations.
 - Adds additional tests.
