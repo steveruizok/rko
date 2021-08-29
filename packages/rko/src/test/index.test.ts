@@ -18,6 +18,10 @@ export class TodoState extends StateManager<State> {
 
   // Internal API -------------------------
 
+  protected onStateWillChange = (state: State, id: string) => {
+    this.log.push('before:' + id)
+  }
+
   protected onStateDidChange = (state: State, id: string) => {
     this.log.push(id)
   }
@@ -415,12 +419,19 @@ describe('State manager', () => {
       .reset()
 
     expect(state.log).toStrictEqual([
+      'before:command:add_item',
       'command:add_item',
+      'before:command:toggle_todo',
       'command:toggle_todo',
+      'before:command:toggle_todo',
       'command:toggle_todo',
+      'before:patch:update_todo_text',
       'patch:update_todo_text',
+      'before:undo:toggle_todo',
       'undo:toggle_todo',
+      'before:redo:toggle_todo',
       'redo:toggle_todo',
+      'before:reset',
       'reset',
     ])
   })

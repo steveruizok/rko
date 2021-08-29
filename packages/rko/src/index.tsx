@@ -115,7 +115,9 @@ export class StateManager<T extends object> {
   private applyPatch = (patch: Patch<T>, id: string) => {
     const prev = this._state
     const next = merge(this._state, patch)
-    this._state = this.cleanup(next, prev, patch, id)
+    const final = this.cleanup(next, prev, patch, id)
+    this.onStateWillChange(final, id)
+    this._state = final
     this.store.setState(this._state, true)
     this.onStateDidChange(this._state, id)
     return this
@@ -126,17 +128,25 @@ export class StateManager<T extends object> {
   /**
    * Perform any last changes to the state before updating.
    * Override this on your extending class.
-   * @param state The next state.
+   * @param nextState The next state.
    * @param prevState The previous state.
    * @param patch The patch that was just applied.
    * @param id (optional) An id for the just-applied patch.
+   * @returns The final new state to apply.
    */
   protected cleanup = (
-    state: T,
+    nextState: T,
     prevState: T,
     patch: Patch<T>,
     id?: string
-  ): T => state
+  ): T => nextState
+
+  /**
+   * A life-cycle method called when the state is about to change.
+   * @param state The next state.
+   * @param id An id for the change.
+   */
+  protected onStateWillChange = (state: T, id: string): void => {}
 
   /**
    * A life-cycle method called when the state has changed.
@@ -197,8 +207,9 @@ export class StateManager<T extends object> {
    * Reset the state to the initial state and reset history.
    */
   public reset = () => {
+    this.onStateWillChange(this.initialState, 'reset')
     this._state = this.initialState
-    this.store.setState(this.initialState, true)
+    this.store.setState(this._state, true)
     this.resetHistory()
     this.persist()
     this.onStateDidChange(this._state, 'reset')

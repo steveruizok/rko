@@ -1,10 +1,17 @@
 # rko
 
+## 0.5.14
+
+- Adds `onStateWillChange`
+- Adds tests for `onStateWillChange`
+
 ## 0.5.13
 
 - Adds `onStateDidChange`
+- Adds tests for `onStateDidChange`
 - Adds `id` to `Command` (optional)
 - Adds `id` parameter (optional) to methods that change state
+- Fixes return type for `StateManager` methods, now correctly chainable
 
 ## 0.5.13
 

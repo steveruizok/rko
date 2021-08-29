@@ -192,8 +192,6 @@ loadNewTodos = (state: State) =>
 
 The cleanup method is called on every state change, _after_ applying the current patch. It receives the next state, the previous state, and the patch that was just applied. It returns the "final" updated state.
 
-You can override this method in order to clean up any state that is no longer needed. Note that the changes won't be present in the undo/redo stack.
-
 ```ts
 cleanup = (next: State) => {
   const final = { ...state }
@@ -208,19 +206,35 @@ cleanup = (next: State) => {
 }
 ```
 
-You can also use your `cleanup` method override to log changes or implement middleware (see [Using Middleware](#using-middleware)).
+You can override this method in order to clean up any state that is no longer needed. Note that the changes won't be present in the undo/redo stack.
 
-#### `onStateDidChange(state: State, id: string)`
+You can also override this method to log changes or implement middleware (see [Using Middleware](#using-middleware)).
 
-The `onStateDidChange` method is called after each state change. You can override this method to log changes or implement middleware (see [Using Middleware](#using-middleware)).
+#### `onStateWillChange(state: State, id: string)`
+
+The `onStateWillChange` method is called just before each state change. It runs after `cleanup`. Your React components will _not_ have updated when this method runs.
 
 ```ts
-onStateDidChange = (state: State, id: string) => {
-  console.log(id)
+onStateWillChange = (state: State, id: string) => {
+  console.log('Changing from', this.state, 'to', state, 'because', id)
+  // > Changed from {...} to {...} because command:toggled_todo
 }
 ```
 
-The `id` argument will be either `patch`, `command`, `undo`, `redo`, or `reset`. If an `id` argument was provided with the call that prompted the change (e.g. `setState(command, "myCommand"`) then that `id` will be available as the method's second parameter (e.g. `undo:myCommand`).
+Its first argument is the _next_ state. (You can still access the current state as `this.state`). The `id` argument will be either `patch`, `command`, `undo`, `redo`, or `reset`. If an `id` argument was provided with the call that prompted the change (e.g. `setState(command, "myCommand"`) then that `id` will be available as the method's second parameter (e.g. `undo:myCommand`).
+
+You can override this method to log changes or implement middleware (see [Using Middleware](#using-middleware)). If you're interested in _what_ changed, consider using the [cleanup](#cleanup) method instead.
+
+#### `onStateDidChange(state: State, id: string)`
+
+The `onStateDidChange` method works just like `onStateWillChange`, except that it runs _after_ the state has updated. Your React components will have updated by the time this method runs.
+
+```ts
+onStateDidChange = (state: State, id: string) => {
+  console.log('Changed to', state, 'because', id)
+  // > Changed to {...} because command:toggled_todo
+}
+```
 
 #### `snapshot`
 
