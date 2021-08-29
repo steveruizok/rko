@@ -59,7 +59,9 @@ Next, export an instance of the state. If you want to persist the state, give it
 export const myState = new MyState({ count: 0 }, 'my-state')
 ```
 
-In your React components, you can use the state's `useStore` hook to select out the data you need. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
+In your React components, you can use the state's `useStore` hook to select out the data you need. 
+
+> For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
 
 ```jsx
 // app.jsx
@@ -292,7 +294,7 @@ cleanup = (next: State, prev: State, patch: Patch<State>) => {
 }
 ```
 
-#### Persisting the State
+### Persisting the State
 
 To **persist** the state, pass an **id** string to the class constructor.
 
@@ -316,7 +318,7 @@ function App() {
 }
 ```
 
-#### Upgrading the Persisted State
+### Upgrading the Persisted State
 
 The constructor also accepts a version number. If you want to replace the persisted state, you can bump the version number.
 
@@ -467,11 +469,11 @@ describe('My State', () => {
 })
 ```
 
-### Tips
+## Tips
 
 Your `StateManager` sub-class is a regular class, so feel free to extend it with other properties and methods that your methods can rely on. For example, you might want multiple snapshots, a more complex `status`, or asynchronous behaviors.
 
-### Examples
+## Examples
 
 - [Todo List](https://codesandbox.io/s/rko-example-mf9cx)
 - [Tic Tac Toe](https://codesandbox.io/s/tic-tac-toe-j9v1l)
