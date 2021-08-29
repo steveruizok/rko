@@ -435,4 +435,18 @@ describe('State manager', () => {
       'reset',
     ])
   })
+
+  it('Is extensible with a constructor', () => {
+    interface State {
+      count: 0
+    }
+
+    class ExtendState extends StateManager<State> {
+      constructor() {
+        super({ count: 0 }, 'someId')
+      }
+    }
+
+    new ExtendState()
+  })
 })

@@ -6,7 +6,7 @@ const name = process.env.npm_package_name || ''
 
 async function main() {
   esbuild.build({
-    entryPoints: ['./src/index.tsx'],
+    entryPoints: ['./src/index.ts'],
     external: ['react', 'react-dom'],
     outdir: 'dist/esm',
     minify: false,
