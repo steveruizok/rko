@@ -1,5 +1,9 @@
 # rko
 
+## 0.5.16
+
+- Adds missing calls to `onStateWillChange` and `onStateDidChange` during `replaceState`.
+
 ## 0.5.15
 
 - Adds `onStateWillChange`
