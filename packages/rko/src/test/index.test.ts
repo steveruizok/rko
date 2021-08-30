@@ -1,4 +1,4 @@
-import { StateManager } from '../index'
+import { StateManager } from '../state-manager'
 import { del } from 'idb-keyval'
 
 export interface Todo {
@@ -153,6 +153,13 @@ export class TodoState extends StateManager<State> {
       },
       'add_item'
     )
+  }
+
+  patchAndPersist = () => {
+    this.patchState({
+      items: ['new'],
+    })
+    this.persist()
   }
 }
 
@@ -448,5 +455,20 @@ describe('State manager', () => {
     }
 
     new ExtendState()
+  })
+
+  it('Is patches and persists', (done) => {
+    const state = new TodoState(initialState, 'pp-test')
+    state.patchAndPersist()
+    expect(state.state.items.length).toBe(1)
+    state.undo()
+    expect(state.state.items.length).toBe(1)
+
+    const state2 = new TodoState(initialState, 'pp-test')
+
+    setTimeout(() => {
+      expect(state2.state.items.length).toBe(1)
+      done()
+    }, 100)
   })
 })

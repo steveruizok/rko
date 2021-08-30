@@ -1,5 +1,9 @@
 # rko
 
+## 0.5.19
+
+- Makes the `persist` method `protected` rather than `private`, so that you can manually call persist from sub-class methods.
+
 ## 0.5.18
 
 - Fix export bugs related to esm

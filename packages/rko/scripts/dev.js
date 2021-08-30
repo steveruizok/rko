@@ -12,7 +12,7 @@ async function main() {
     minify: false,
     bundle: true,
     format: 'esm',
-    target: 'esnext',
+    target: 'es6',
     tsconfig: './tsconfig.json',
     watch: {
       onRebuild(error) {

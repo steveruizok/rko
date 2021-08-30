@@ -97,12 +97,10 @@ export class StateManager<T extends object> {
   /**
    * Save the current state to indexdb.
    */
-  private persist = (): void | Promise<void> => {
+  protected persist = (): void | Promise<void> => {
     if (this.id) {
-      idb.set(this.id, this._state)
+      return idb.set(this.id, this._state)
     }
-
-    return
   }
 
   /**
