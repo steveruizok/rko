@@ -83,14 +83,19 @@ export class StateManager<T extends object> {
 
           this._state = deepCopy(next)
           this._snapshot = deepCopy(next)
-          this._status = 'ready'
           this.store.setState(this._state, true)
+          this._status = 'ready'
+          this.onReady()
         } else {
           await idb.set(id + '_version', version || -1)
 
           this._status = 'ready'
+          this.onReady()
         }
       })
+    } else {
+      this._status = 'ready'
+      this.onReady()
     }
   }
 
@@ -122,6 +127,12 @@ export class StateManager<T extends object> {
   }
 
   // Internal API ---------------------------------
+
+  /**
+   * A callback fired when the constructor finishes loading any
+   * persisted data.
+   */
+  protected onReady = (): void => {}
 
   /**
    * Perform any last changes to the state before updating.
