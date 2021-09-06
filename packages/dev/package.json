@@ -12,7 +12,7 @@
   "license": "MIT",
   "scripts": {
     "start": "node ./esbuild.config.mjs --dev tsc --watch",
-    "build": "yarn clean && node ./esbuild.config.mjs && tsc --project tsconfig.build.json  --emitDeclarationOnly --outDir dist/types",
+    "build": "yarn clean && node ./esbuild.config.mjs && tsc --project tsconfig.json  --emitDeclarationOnly --outDir dist/types",
     "clean": "rm -rf dist"
   },
   "files": [

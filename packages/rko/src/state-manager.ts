@@ -9,7 +9,7 @@ export class StateManager<T extends object> {
   /**
    * An ID used to persist state in indexdb.
    */
-  private id?: string
+  protected _idbId?: string
 
   /**
    * The initial state.
@@ -57,15 +57,15 @@ export class StateManager<T extends object> {
     version?: number,
     update?: (prev: T, next: T, prevVersion: number) => T
   ) {
-    this.id = id
+    this._idbId = id
     this._state = deepCopy(initialState)
     this._snapshot = deepCopy(initialState)
     this.initialState = deepCopy(initialState)
     this.store = createVanilla(() => this._state)
     this.useStore = create(this.store)
 
-    if (this.id) {
-      idb.get(this.id).then(async (saved) => {
+    if (this._idbId) {
+      idb.get(this._idbId).then(async (saved) => {
         if (saved) {
           let next = saved
 
@@ -103,8 +103,8 @@ export class StateManager<T extends object> {
    * Save the current state to indexdb.
    */
   protected persist = (): void | Promise<void> => {
-    if (this.id) {
-      return idb.set(this.id, this._state)
+    if (this._idbId) {
+      return idb.set(this._idbId, this._state)
     }
   }
 
