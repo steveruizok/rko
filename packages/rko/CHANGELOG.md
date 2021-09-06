@@ -1,5 +1,10 @@
 # rko
 
+## 0.5.23
+
+- Adds `replaceHistory` method.
+- Makes `pointer` protected rather than private.
+
 ## 0.5.21
 
 - Commands will now use the `id` property from the command object as a

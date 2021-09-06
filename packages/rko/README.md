@@ -284,6 +284,10 @@ Move forward in history, re-doing the previous undone change.
 
 Reset the state to its initial state (as provided in the constructor). This is not undoable. Calling `reset()` will also reset the history.
 
+#### `replaceHistory(stack: Command[], pointer?: number)`
+
+Replace the state's history. By default the pointer will be set to the end of the stack. Note that it's your responsibility to ensure that the new history stack is compatible with the current state!
+
 #### `resetHistory()`
 
 Reset the state's history.
@@ -299,6 +303,10 @@ Save the current state to the the `snapshot` property (see [Using Snapshots](#us
 #### `useStore`
 
 The [zustand hook](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it) used to subscribe components to the state.
+
+#### `pointer`
+
+The current pointer. Readonly.
 
 #### `state`
 
