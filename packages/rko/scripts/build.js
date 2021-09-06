@@ -28,10 +28,6 @@ async function main() {
       tsconfig: './tsconfig.build.json',
     })
 
-    fs.copyFile('./README.md', './dist/README.md', (err) => {
-      if (err) throw err
-    })
-
     console.log(`✔ ${name}: Built package.`)
   } catch (e) {
     console.log(`× ${name}: Build failed due to an error.`)
