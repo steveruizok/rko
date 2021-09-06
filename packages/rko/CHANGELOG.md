@@ -1,5 +1,54 @@
 # rko
 
+## 0.5.21
+
+- Commands will now use the `id` property from the command object as a
+  fallback if the id argument is not provided to `setState`.
+
+  ```js
+  // `onStateDidChange` will be called with (state, "added_message")
+  addMessage(newMessage) {
+    this.setState({
+      before: { message: this.state.message },
+      after: { message: newMessage }
+    }, "added_message")
+  }
+
+  // `onStateDidChange` will be called with (state, "cleared_message")
+  clearMessage() {
+    this.setState({
+      id: "cleared_message",
+      before: { message: this.state.message },
+      after: { message: "" }
+    })
+  }
+
+  // `onStateDidChange` will be called with (state, "flipped_message")
+  reverseMessage() {
+    this.setState({
+      id: "reversed_message",
+      before: { message: this.state.message },
+      after: { message: [...this.state.message].reverse().join("") }
+    }, "flipped_message")
+  }
+  ```
+
+- Changes `stack` from private to protected. This allows extending
+  classes to make the `stack` public if they wish.
+
+  ```tjs
+  class Example extends StateManager {
+    get history() {
+      return this.stack
+    }
+  }
+  ```
+
+## 0.5.20
+
+- Adds the `onReady` method, which is called when the state loads
+  persisted data.
+
 ## 0.5.19
 
 - Makes the `persist` method `protected` rather than `private`, so that you can manually call persist from sub-class methods.

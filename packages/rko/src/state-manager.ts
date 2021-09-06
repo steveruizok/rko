@@ -22,11 +22,6 @@ export class StateManager<T extends object> {
   private store: StoreApi<T>
 
   /**
-   * A stack of commands used for history (undo and redo_.
-   */
-  private stack: Command<T>[] = []
-
-  /**
    * The index of the current command.
    */
   private pointer: number = -1
@@ -40,6 +35,11 @@ export class StateManager<T extends object> {
    * The state manager's current status, with regard to restoring persisted state.
    */
   private _status: 'loading' | 'ready' = 'loading'
+
+  /**
+   * A stack of commands used for history (undo and redo).
+   */
+  protected stack: Command<T>[] = []
 
   /**
    * A snapshot of the current state.
@@ -204,10 +204,12 @@ export class StateManager<T extends object> {
    * @param command The command to apply and add to the undo/redo stack.
    * @param id (optional) An id for this command.
    */
-  protected setState = (command: Command<T>, id?: string) => {
-    this.pointer++
-    this.stack = this.stack.slice(0, this.pointer)
-    this.stack.push({ id, ...command })
+  protected setState = (command: Command<T>, id = command.id) => {
+    if (this.pointer < this.stack.length - 1) {
+      this.stack = this.stack.slice(0, this.pointer + 1)
+    }
+    this.stack.push({ ...command, id })
+    this.pointer = this.stack.length - 1
     this.applyPatch(command.after, id ? 'command:' + id : 'command')
     this.persist()
     return this

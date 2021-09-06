@@ -161,6 +161,18 @@ toggleMenuOpen = () =>
   })
 ```
 
+You can pass an id as `setState`'s second parameter. This is provided to help with logging and debugging. The id will be saved in the history stack and be available in the [`onStateWillChange`](#onstatewillchange) and [`onStateDidChange`](#onstatedidchange) callbacks.
+
+For example, this method:
+
+```js
+ addMessage(newMessage) {
+    this.patchState({ message: newMessage }, "added_message")
+  }
+```
+
+Would cause `onStateDidChange` to receive `added_message` as its second argument.
+
 #### `setState(command: Command<State>, id?: string)`
 
 Update the state, push the command to the undo/redo stack, and persist the new state. This method accepts a `Command` type object containing two `Patch`es: `before` and `after`. The `after` patch should contain the changes to the state that you wish to make immediately and when the command is "re-done". The `before` patch should contain the changes to make when the command is "undone".
@@ -176,6 +188,8 @@ adjustCount = (n) =>
     },
   })
 ```
+
+Like [`patchState`](#patchstate), you can provide an id as the method's second argument. Alternatively, you can provide the id as part of the command object. If you provide _both_, then the argument id will be used instead.
 
 #### `replaceState(state: State, id?: string)`
 
@@ -208,7 +222,21 @@ cleanup = (next: State) => {
 
 You can override this method in order to clean up any state that is no longer needed. Note that the changes won't be present in the undo/redo stack.
 
-You can also override this method to log changes or implement middleware (see [Using Middleware](#using-middleware)).
+You can also override this method to log changes or implement
+middleware (see [Using Middleware](#using-middleware)).
+
+#### `onReady()`
+
+The `onReady` method is called when the state is finished loading
+persisted data, if any.
+
+```ts
+class Example extends StateManager {
+  onReady() {
+    console.log('loaded state from indexdb', this.state)
+  }
+}
+```
 
 #### `onStateWillChange(state: State, id: string)`
 
@@ -221,7 +249,7 @@ onStateWillChange = (state: State, id: string) => {
 }
 ```
 
-Its first argument is the _next_ state. (You can still access the current state as `this.state`). The `id` argument will be either `patch`, `command`, `undo`, `redo`, or `reset`. If an `id` argument was provided with the call that prompted the change (e.g. `setState(command, "myCommand"`) then that `id` will be available as the method's second parameter (e.g. `undo:myCommand`).
+Its first argument is the _next_ state. (You can still access the current state as `this.state`). The `id` argument will be either `patch`, `command`, `undo`, `redo`, or `reset`.
 
 You can override this method to log changes or implement middleware (see [Using Middleware](#using-middleware)). If you're interested in _what_ changed, consider using the [cleanup](#cleanup) method instead.
 

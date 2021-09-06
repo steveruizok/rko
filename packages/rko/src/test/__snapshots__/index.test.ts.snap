@@ -1,0 +1,67 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`State manager Allows classes to expose the stack property: history_stack 1`] = `
+Array [
+  Object {
+    "after": Object {
+      "todos": Object {
+        "todo0": Object {
+          "text": "hey world",
+        },
+      },
+    },
+    "before": Object {
+      "todos": Object {
+        "todo0": Object {
+          "text": "Scrub the dog.",
+        },
+      },
+    },
+    "id": "save_todo_text",
+  },
+]
+`;
+
+exports[`State manager Uses the command id OR the provided id: history_stack 1`] = `
+Array [
+  Object {
+    "after": Object {
+      "todos": Object {
+        "todo0": Object {
+          "text": "hey world",
+        },
+      },
+    },
+    "before": Object {
+      "todos": Object {
+        "todo0": Object {
+          "text": "Scrub the dog.",
+        },
+      },
+    },
+    "id": "set_todo_text",
+  },
+]
+`;
+
+exports[`State manager Uses the command id if id arg is not provided: history_stack 1`] = `
+Array [
+  Object {
+    "after": Object {
+      "todos": Object {
+        "todo0": Object {
+          "text": "hey world",
+        },
+      },
+    },
+    "before": Object {
+      "todos": Object {
+        "todo0": Object {
+          "text": "Scrub the dog.",
+        },
+      },
+    },
+    "id": "save_todo_text",
+  },
+]
+`;

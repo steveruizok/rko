@@ -16,6 +16,10 @@ export interface State {
 export class TodoState extends StateManager<State> {
   log: string[] = []
 
+  get history() {
+    return this.stack
+  }
+
   // Internal API -------------------------
 
   protected onStateWillChange = (state: State, id: string) => {
@@ -108,6 +112,32 @@ export class TodoState extends StateManager<State> {
       },
       'set_todo_text'
     )
+  }
+
+  // Test which id gets used (it should be the last one)
+  setTodoTextWithCommandId = (id: string, text: string) => {
+    const todo = this.snapshot.todos[id]
+    if (text === todo.text) return this
+
+    return this.setState(
+      {
+        id: 'save_todo_text',
+        before: { todos: { [id]: { text: todo.text } } },
+        after: { todos: { [id]: { text } } },
+      },
+      'set_todo_text'
+    )
+  }
+  // Test which id gets used (it should be the last one)
+  setTodoTextWithJustCommandId = (id: string, text: string) => {
+    const todo = this.snapshot.todos[id]
+    if (text === todo.text) return this
+
+    return this.setState({
+      id: 'save_todo_text',
+      before: { todos: { [id]: { text: todo.text } } },
+      after: { todos: { [id]: { text } } },
+    })
   }
 
   /**
@@ -470,5 +500,31 @@ describe('State manager', () => {
       expect(state2.state.items.length).toBe(1)
       done()
     }, 100)
+  })
+
+  it('Allows classes to expose the stack property', () => {
+    const todoState = new TodoState(initialState, 'pp-test')
+    todoState.setTodoTextWithJustCommandId('todo0', 'hey world')
+    expect(todoState.history).toMatchSnapshot('history_stack')
+  })
+
+  it('Uses the command id OR the provided id', () => {
+    const todoState = new TodoState(initialState, 'pp-test')
+    todoState.setTodoTextWithCommandId('todo0', 'hey world')
+    expect(todoState.log).toStrictEqual([
+      'before:command:set_todo_text',
+      'command:set_todo_text',
+    ])
+    expect(todoState.history).toMatchSnapshot('history_stack')
+  })
+
+  it('Uses the command id if id arg is not provided', () => {
+    const todoState = new TodoState(initialState, 'pp-test')
+    todoState.setTodoTextWithJustCommandId('todo0', 'hey world')
+    expect(todoState.log).toStrictEqual([
+      'before:command:save_todo_text',
+      'command:save_todo_text',
+    ])
+    expect(todoState.history).toMatchSnapshot('history_stack')
   })
 })
