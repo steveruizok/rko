@@ -1,6 +1,6 @@
 {
   "private": true,
-  "version": "0.0.1",
+  "version": "0.5.22",
   "name": "rko",
   "author": {
     "name": "Steve Ruiz",
@@ -16,7 +16,8 @@
   ],
   "license": "MIT",
   "workspaces": [
-    "packages/*"
+    "packages/rko",
+    "packages/dev"
   ],
   "scripts": {
     "test": "jest",
@@ -59,7 +60,7 @@
       "fake-indexeddb/auto"
     ],
     "transform": {
-      "^.+\\.(tsx|jsx|ts|js)?$": "ts-jest"
+      "^.+\\.(tsx|jsx|ts|js|mjs)?$": "ts-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "moduleFileExtensions": [

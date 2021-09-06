@@ -1,10 +1,18 @@
 /* eslint-disable */
-
+const fs = require('fs')
 const esbuild = require('esbuild')
 
 const name = process.env.npm_package_name || ''
 
 async function main() {
+  if (fs.existsSync('./dist')) {
+    fs.rmSync('./dist', { recursive: true }, (e) => {
+      if (e) {
+        throw e
+      }
+    })
+  }
+
   esbuild.build({
     entryPoints: ['./src/index.ts'],
     external: ['react', 'react-dom'],

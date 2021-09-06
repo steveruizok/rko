@@ -24,7 +24,7 @@ export class StateManager<T extends object> {
   /**
    * The index of the current command.
    */
-  private pointer: number = -1
+  protected pointer: number = -1
 
   /**
    * The current state.
@@ -227,6 +227,21 @@ export class StateManager<T extends object> {
     this.resetHistory()
     this.persist()
     this.onStateDidChange(this._state, 'reset')
+    return this
+  }
+
+  /**
+   * Force replace a new undo/redo history. It's your responsibility
+   * to make sure that this is compatible with the current state!
+   * @param history The new array of commands.
+   * @param pointer (optional) The new pointer position.
+   */
+  public replaceHistory = (
+    history: Command<T>[],
+    pointer = history.length - 1
+  ): this => {
+    this.stack = history
+    this.pointer = pointer
     return this
   }
 

@@ -1,11 +1,15 @@
 {
+  "composite": true,
   "extends": "./tsconfig.base.json",
   "exclude": ["node_modules", "**/*.test.ts", "**/*.spec.ts"],
+  "files": [],
+  "references": [{ "path": "./packages/rko" }, { "path": "./packages/dev" }],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
       "rko": ["./packages/rko/dist"],
-      "+*": ["./packages/rko/src/*"]
+      "+*": ["./packages/rko/src/*"],
+      "-*": ["./packages/dev/src/*"]
     }
   }
 }

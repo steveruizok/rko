@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Todo, todoState } from 'state'
+import { Todo, todoState } from '-state'
 
 export interface TodoProps {
   todo: Todo
