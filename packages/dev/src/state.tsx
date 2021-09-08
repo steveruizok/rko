@@ -14,6 +14,8 @@ export interface State {
 export class TodoState extends StateManager<State> {
   // Internal API -------------------------
 
+  protected onReady = () => {}
+
   protected cleanup = (state: State) => {
     Object.entries(state.todos).forEach(([id, todo]) => {
       if (!todo) delete state.todos[id]

@@ -84,18 +84,18 @@ export class StateManager<T extends object> {
           this._state = deepCopy(next)
           this._snapshot = deepCopy(next)
           this.store.setState(this._state, true)
-          this._status = 'ready'
-          this.onReady()
         } else {
           await idb.set(id + '_version', version || -1)
-
-          this._status = 'ready'
-          this.onReady()
         }
+        this._status = 'ready'
+        this.onReady()
       })
     } else {
-      this._status = 'ready'
-      this.onReady()
+      // We need to wait for any override to `onReady` to take effect.
+      new Promise<void>((resolve) => resolve()).then(() => {
+        this._status = 'ready'
+        this.onReady()
+      })
     }
   }
 

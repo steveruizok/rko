@@ -14,6 +14,8 @@ export interface State {
 }
 
 export class TodoState extends StateManager<State> {
+  isReady = false
+
   log: string[] = []
 
   get history() {
@@ -21,6 +23,10 @@ export class TodoState extends StateManager<State> {
   }
 
   // Internal API -------------------------
+
+  protected onReady = () => {
+    this.isReady = true
+  }
 
   protected onStateWillChange = (state: State, id: string) => {
     this.log.push('before:' + id)
@@ -526,5 +532,21 @@ describe('State manager', () => {
       'command:save_todo_text',
     ])
     expect(todoState.history).toMatchSnapshot('history_stack')
+  })
+
+  it('Calls onReady if an id is set', (done) => {
+    const todoState = new TodoState(initialState, 'pp-test-2')
+    setTimeout(() => {
+      expect(todoState.isReady).toBe(true)
+      done()
+    }, 100)
+  })
+
+  it('Calls onReady if an id is not set', (done) => {
+    const todoState = new TodoState(initialState)
+    setTimeout(() => {
+      expect(todoState.isReady).toBe(true)
+      done()
+    }, 100)
   })
 })

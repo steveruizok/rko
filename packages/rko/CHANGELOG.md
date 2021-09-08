@@ -1,5 +1,10 @@
 # rko
 
+## 0.5.25
+
+- Fix bug in classes that extend `onReady`, where extended `onReady`
+  was not being called if `id` was not provided.
+
 ## 0.5.23
 
 - Adds `replaceHistory` method.
