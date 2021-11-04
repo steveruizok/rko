@@ -419,6 +419,40 @@ describe('State manager', () => {
     }, 100)
   })
 
+  it('Upgrades when the version changes if upgrade is provided more', (done) => {
+    const todoState1 = new TodoState(initialState, 'upgrade_test_3', 10)
+    todoState1.toggleTodoComplete('todo0')
+
+    expect(todoState1.state.todos.todo0.isComplete).toBe(true)
+
+    // Upgrade and remove the completed todos
+    const todoState2 = new TodoState(
+      initialState,
+      'upgrade_test_3',
+      11,
+      (prev) => {
+        return {
+          todos: {
+            ...Object.fromEntries(
+              Object.entries(prev.todos)
+                .filter(([id, todo]) => !todo.isComplete)
+                .map(([id, todo]) => [id, todo])
+            ),
+          },
+          items: prev.items,
+          flag: 'OKOKOK',
+        }
+      }
+    )
+
+    // Small timeout to allow for the idb promises to resolve
+    setTimeout(() => {
+      expect(Object.values(todoState2.state.todos).length).toBe(1)
+      expect((todoState2.state as any)['flag']).toBe('OKOKOK')
+      done()
+    }, 100)
+  })
+
   it('Correctly sets canUndo', () => {
     const state = new TodoState(initialState)
     expect(state.canUndo).toBe(false)

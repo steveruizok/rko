@@ -1,5 +1,9 @@
 # rko
 
+## 0.6.0
+
+- Change export to ES5.
+
 ## 0.5.25
 
 - Fix bug in classes that extend `onReady`, where extended `onReady`
