@@ -38,7 +38,7 @@ To use the library, first define your state as a class that extends `StateManage
 
 ```ts
 // state.js
-import { StateManager } from 'rko'
+import { StateManager } from "rko"
 
 class MyState extends StateManager {
   adjustCount = (n) =>
@@ -56,14 +56,14 @@ class MyState extends StateManager {
 Next, export an instance of the state. If you want to persist the state, give it an `id`.
 
 ```js
-export const myState = new MyState({ count: 0 }, 'my-state')
+export const myState = new MyState({ count: 0 }, "my-state")
 ```
 
 In your React components, you can use the state's `useStore` hook to select out the data you need. For more on the `useStore` hook, see zustand's [documentation](https://github.com/pmndrs/zustand#then-bind-your-components-and-thats-it).
 
 ```jsx
 // app.jsx
-import { myState } from './state'
+import { myState } from "./state"
 
 function App() {
   const { count } = myState.useStore((s) => s.count)
@@ -122,7 +122,7 @@ Right on, you've got your global state.
 The `rko` library exports a class named `StateManager` that you can extend to create a global state for your app. The methods you add to the class can access the `StateManager`'s [internal API](#internal-api).
 
 ```ts
-import { StateManager } from 'rko'
+import { StateManager } from "rko"
 
 class AppState extends StateManager {
   // your methods here
@@ -211,7 +211,7 @@ cleanup = (next: State) => {
   const final = { ...state }
 
   for (const id in todos) {
-    if (todos[id] === 'undefined') {
+    if (todos[id] === "undefined") {
       delete final.todos[id]
     }
   }
@@ -243,7 +243,7 @@ persisted data, if any.
 ```ts
 class Example extends StateManager {
   onReady() {
-    console.log('loaded state from indexdb', this.state)
+    console.log("loaded state from indexdb", this.state)
   }
 }
 ```
@@ -278,7 +278,7 @@ The `onStateWillChange` method is called just before each state change. It runs 
 
 ```ts
 onStateWillChange = (state: State, id: string) => {
-  console.log('Changing from', this.state, 'to', state, 'because', id)
+  console.log("Changing from", this.state, "to", state, "because", id)
   // > Changed from {...} to {...} because command:toggled_todo
 }
 ```
@@ -293,7 +293,7 @@ The `onStateDidChange` method works just like `onStateWillChange`, except that i
 
 ```ts
 onStateDidChange = (state: State, id: string) => {
-  console.log('Changed to', state, 'because', id)
+  console.log("Changed to", state, "because", id)
   // > Changed to {...} because command:toggled_todo
 }
 ```
@@ -365,7 +365,7 @@ Whether the state can redo, given its undo/redo stack. Readonly.
 To use this library with TypeScript, define an interface for your state object and then use it as a generic when extending `StateManager`.
 
 ```ts
-import { StateManager, Patch, Command } from 'rko'
+import { StateManager, Patch, Command } from "rko"
 
 interface State {
   name: string
@@ -391,7 +391,7 @@ cleanup = (next: State, prev: State, patch: Patch<State>) => {
 To **persist** the state, pass an **id** string to the class constructor.
 
 ```ts
-export const appState = new AppState({ count: 0 }, 'counter')
+export const appState = new AppState({ count: 0 }, "counter")
 ```
 
 The library will now save a copy of the state after each new call to `setState`, `undo`, `redo`, or `reset`. The next time you create a new instance of your `StateManager` sub-class, it will restore the state from the persisted state.
@@ -402,7 +402,7 @@ Because restoring a state is done _asynchronously_, the provided initial state w
 function App() {
   const { count } = myState.useStore((s) => s.count)
 
-  if (myState.status === 'loading') {
+  if (myState.status === "loading") {
     return null
   }
 
@@ -418,7 +418,7 @@ The constructor also accepts a version number. If you want to replace the persis
 const initialState = { wins: 0, losses: 0 }
 
 // Will persist state under the key 'game'
-export const appState = new AppState(initialState, 'game', 1)
+export const appState = new AppState(initialState, "game", 1)
 ```
 
 By default, if the constructor finds a persisted state with the same id but a lower version number it will replace the persisted state with the initial state that you provide.
@@ -427,7 +427,7 @@ By default, if the constructor finds a persisted state with the same id but a lo
 const initialState = { wins: 0, losses: 0, score: 0 }
 
 // Will replace any previous 'game' state with a version < 2
-export const appState = new AppState(initialState, 'game', 2)
+export const appState = new AppState(initialState, "game", 2)
 ```
 
 If you want to migrate or "upgrade" the earlier persisted state instead, you can pass a function that will receive the previous state, the new state, and the previous version number, and return the new state for this version.
@@ -437,7 +437,7 @@ const initialState = { wins: 0, losses: 0, score: 0 }
 
 export const appState = new AppState(
   initialState,
-  'game',
+  "game",
   2,
   (prev, next, version) => ({
     ...prev,
@@ -525,10 +525,10 @@ One way to test is by importing your `StateManager` sub-class and creating new i
 ```js
 // state.test.js
 
-import { MyState } from './state'
+import { MyState } from "./state"
 
-describe('My State', () => {
-  it('Increments the count (do, undo and redo)', () => {
+describe("My State", () => {
+  it("Increments the count (do, undo and redo)", () => {
     const myState = new MyState({ count: 0 })
     myState.adustCount(1)
     expect(myState.state.count).toBe(1)
@@ -545,15 +545,15 @@ Alternatively, you can import your sub-class instance and use the `reset` method
 ```js
 // state.test.js
 
-import { myState } from './state'
+import { myState } from "./state"
 
-describe('My State', () => {
-  it('Increments the count', () => {
+describe("My State", () => {
+  it("Increments the count", () => {
     myState.adustCount(1)
     expect(myState.state.count).toBe(1)
   })
 
-  it('Decrements the count', () => {
+  it("Decrements the count", () => {
     myState.reset()
     myState.adustCount(-1)
     expect(myState.state.count).toBe(-1)

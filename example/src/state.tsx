@@ -1,4 +1,4 @@
-import { StateManager } from 'rko'
+import { StateManager } from "rko"
 
 export interface Todo {
   id: string
@@ -38,7 +38,7 @@ export class TodoState extends StateManager<State> {
         todos: {
           [id]: {
             id,
-            text: '',
+            text: "",
             isComplete: false,
             dateCreated: new Date().getTime(),
           },
@@ -114,14 +114,14 @@ export class TodoState extends StateManager<State> {
 const initialState: State = {
   todos: {
     todo0: {
-      id: 'todo0',
-      text: 'Scrub the dog.',
+      id: "todo0",
+      text: "Scrub the dog.",
       isComplete: false,
       dateCreated: 1629575640560,
     },
     todo1: {
-      id: 'todo1',
-      text: 'Sharpen the dishes.',
+      id: "todo1",
+      text: "Sharpen the dishes.",
       isComplete: false,
       dateCreated: 1629275340560,
     },

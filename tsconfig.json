@@ -1,15 +1,36 @@
 {
-  "composite": true,
-  "extends": "./tsconfig.base.json",
-  "exclude": ["node_modules", "**/*.test.ts", "**/*.spec.ts"],
-  "files": [],
-  "references": [{ "path": "./packages/rko" }, { "path": "./packages/dev" }],
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "rko": ["./packages/rko/dist"],
-      "+*": ["./packages/rko/src/*"],
-      "-*": ["./packages/dev/src/*"]
-    }
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": "src",
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true,
+    "sourceMap": true,
+    "emitDeclarationOnly": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "importHelpers": true,
+    "importsNotUsedAsValues": "error",
+    "incremental": true,
+    "jsx": "preserve",
+    "lib": ["dom", "esnext"],
+    "module": "esnext",
+    "moduleResolution": "node",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "skipLibCheck": true,
+    "strict": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "stripInternal": true,
+    "target": "es5",
+    "typeRoots": ["node_modules/@types"],
+    "types": ["node"]
   }
 }

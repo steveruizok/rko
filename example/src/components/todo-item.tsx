@@ -1,5 +1,5 @@
-import * as React from 'react'
-import { Todo, todoState } from '-state'
+import * as React from "react"
+import { Todo, todoState } from "../state"
 
 export interface TodoProps {
   todo: Todo
@@ -23,7 +23,7 @@ export function TodoItem({ todo }: TodoProps) {
 
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === 'Enter') {
+      if (e.key === "Enter") {
         todoState.setTodoText(todo.id, e.currentTarget.value)
       }
     },

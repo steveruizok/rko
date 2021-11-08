@@ -1,7 +1,6 @@
-import * as React from 'react'
-import './styles.css'
-import { todoState } from './state'
-import { TodoItem } from './components/todo-item'
+import * as React from "react"
+import { todoState } from "./state"
+import { TodoItem } from "./components/todo-item"
 
 export default function App() {
   const todos = todoState.useStore((s) => s.todos)

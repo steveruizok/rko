@@ -19,12 +19,8 @@
     "README.md",
     "src"
   ],
-  "dependencies": {
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "rko": "^0.6.0"
-  },
   "devDependencies": {
+    "rko": "../src",
     "@types/node": "^14.14.35",
     "@types/react": "^17.0.19",
     "@types/react-dom": "^17.0.9",
@@ -34,7 +30,6 @@
     "esbuild": "^0.12.21",
     "esbuild-css-modules-plugin": "^2.0.8",
     "rimraf": "3.0.2",
-    "rko": "*",
     "typescript": "4.2.3"
   }
 }

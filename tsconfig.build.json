@@ -8,12 +8,14 @@
     "**/*.spec.ts",
     "src/test",
     "dist",
-    "docs"
+    "docs",
+    "example"
   ],
   "compilerOptions": {
     "composite": false,
     "incremental": false,
     "declarationMap": false,
-    "sourceMap": false
+    "sourceMap": false,
+    "emitDeclarationOnly": true
   }
 }
