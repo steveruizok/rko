@@ -5,11 +5,15 @@
   "compilerOptions": {
     "composite": true,
     "emitDeclarationOnly": true,
-    "rootDir": "src",
     "outDir": "./dist/types",
+    "rootDir": "src",
     "baseUrl": "src",
     "paths": {
       "+*": ["./*"]
     }
+  },
+  "typedocOptions": {
+    "entryPoints": ["src/index.ts"],
+    "out": "docs"
   }
 }

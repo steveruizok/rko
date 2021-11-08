@@ -4,6 +4,7 @@ const fs = require('fs')
 const filesToCopy = [
   'README.md',
   'LICENSE.md',
+  'CHANGELOG.md',
   'rko-logo.svg',
   'rko-logo-shadow.svg',
 ]

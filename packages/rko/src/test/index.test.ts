@@ -17,6 +17,9 @@ export class TodoState extends StateManager<State> {
   isReady = false
 
   log: string[] = []
+  commands: string[] = []
+  patches: string[] = []
+  persists: string[] = []
 
   get history() {
     return this.stack
@@ -24,16 +27,34 @@ export class TodoState extends StateManager<State> {
 
   // Internal API -------------------------
 
-  protected onReady = () => {
+  onCommand = (state: State, id?: string) => {
+    if (id) {
+      this.commands.push(id)
+    }
+  }
+
+  onPatch = (state: State, id?: string) => {
+    if (id) {
+      this.patches.push(id)
+    }
+  }
+
+  onPersist = (state: State, id?: string) => {
+    if (id) {
+      this.persists.push(id)
+    }
+  }
+
+  onReady = () => {
     this.isReady = true
   }
 
-  protected onStateWillChange = (state: State, id: string) => {
+  protected onStateWillChange = (state: State, id?: string) => {
     this.log.push('before:' + id)
   }
 
-  protected onStateDidChange = (state: State, id: string) => {
-    this.log.push(id)
+  protected onStateDidChange = (state: State, id?: string) => {
+    this.log.push('after:' + id)
   }
 
   protected cleanup = (state: State) => {
@@ -134,6 +155,7 @@ export class TodoState extends StateManager<State> {
       'set_todo_text'
     )
   }
+
   // Test which id gets used (it should be the last one)
   setTodoTextWithJustCommandId = (id: string, text: string) => {
     const todo = this.snapshot.todos[id]
@@ -475,7 +497,6 @@ describe('State manager', () => {
     state.reset()
     expect(state.canRedo).toBe(false)
   })
-
   it('Correctly resets, even with mutations.', () => {
     const state = new TodoState(initialState)
     state.addItem()
@@ -486,6 +507,7 @@ describe('State manager', () => {
 
   it('Calls onStateDidChange', () => {
     const state = new TodoState(initialState)
+
     state
       .addItem()
       .toggleTodoComplete('todo0')
@@ -496,20 +518,20 @@ describe('State manager', () => {
       .reset()
 
     expect(state.log).toStrictEqual([
-      'before:command:add_item',
-      'command:add_item',
-      'before:command:toggle_todo',
-      'command:toggle_todo',
-      'before:command:toggle_todo',
-      'command:toggle_todo',
-      'before:patch:update_todo_text',
-      'patch:update_todo_text',
-      'before:undo:toggle_todo',
-      'undo:toggle_todo',
-      'before:redo:toggle_todo',
-      'redo:toggle_todo',
+      'before:add_item',
+      'after:add_item',
+      'before:toggle_todo',
+      'after:toggle_todo',
+      'before:toggle_todo',
+      'after:toggle_todo',
+      'before:update_todo_text',
+      'after:update_todo_text',
+      'before:undo',
+      'after:undo',
+      'before:redo',
+      'after:redo',
       'before:reset',
-      'reset',
+      'after:reset',
     ])
   })
 
@@ -552,8 +574,8 @@ describe('State manager', () => {
     const todoState = new TodoState(initialState, 'pp-test')
     todoState.setTodoTextWithCommandId('todo0', 'hey world')
     expect(todoState.log).toStrictEqual([
-      'before:command:set_todo_text',
-      'command:set_todo_text',
+      'before:set_todo_text',
+      'after:set_todo_text',
     ])
     expect(todoState.history).toMatchSnapshot('history_stack')
   })
@@ -562,25 +584,77 @@ describe('State manager', () => {
     const todoState = new TodoState(initialState, 'pp-test')
     todoState.setTodoTextWithJustCommandId('todo0', 'hey world')
     expect(todoState.log).toStrictEqual([
-      'before:command:save_todo_text',
-      'command:save_todo_text',
+      'before:save_todo_text',
+      'after:save_todo_text',
     ])
     expect(todoState.history).toMatchSnapshot('history_stack')
   })
 
-  it('Calls onReady if an id is set', (done) => {
+  it('Calls onReady if an id is set', async () => {
     const todoState = new TodoState(initialState, 'pp-test-2')
-    setTimeout(() => {
-      expect(todoState.isReady).toBe(true)
-      done()
-    }, 100)
+    await todoState.ready
+    expect(todoState.isReady).toBe(true)
   })
 
-  it('Calls onReady if an id is not set', (done) => {
+  it('Calls onReady if an id is not set', async () => {
     const todoState = new TodoState(initialState)
-    setTimeout(() => {
-      expect(todoState.isReady).toBe(true)
-      done()
-    }, 100)
+    await todoState.ready
+    expect(todoState.isReady).toBe(true)
+  })
+
+  it('Calls onPersist after persisting state.', async () => {
+    const state = new TodoState(initialState)
+      .addItem()
+      .toggleTodoComplete('todo0')
+      .toggleTodoComplete('todo0')
+      .patchTodoText('todo0', 'hey')
+      .undo()
+      .redo()
+      .reset()
+
+    await state.ready
+
+    expect(state.persists).toStrictEqual([
+      'add_item',
+      'toggle_todo',
+      'toggle_todo',
+      'undo',
+      'undo',
+      'reset',
+    ])
+  })
+
+  it('Calls onPatch after patching state.', async () => {
+    const state = new TodoState(initialState)
+      .addItem()
+      .toggleTodoComplete('todo0')
+      .toggleTodoComplete('todo0')
+      .patchTodoText('todo0', 'hey')
+      .undo()
+      .redo()
+      .reset()
+
+    await state.ready
+
+    expect(state.patches).toStrictEqual(['update_todo_text'])
+  })
+
+  it('Calls onCommand after running a command.', async () => {
+    const state = new TodoState(initialState)
+      .addItem()
+      .toggleTodoComplete('todo0')
+      .toggleTodoComplete('todo0')
+      .patchTodoText('todo0', 'hey')
+      .undo()
+      .redo()
+      .reset()
+
+    await state.ready
+
+    expect(state.commands).toStrictEqual([
+      'add_item',
+      'toggle_todo',
+      'toggle_todo',
+    ])
   })
 })

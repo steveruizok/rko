@@ -1,8 +1,7 @@
 /* eslint-disable */
 const fs = require('fs')
 const esbuild = require('esbuild')
-
-const name = process.env.npm_package_name || ''
+const pkg = require('../package.json')
 
 async function main() {
   if (fs.existsSync('./dist')) {
@@ -15,20 +14,22 @@ async function main() {
 
   esbuild.build({
     entryPoints: ['./src/index.ts'],
-    external: ['react', 'react-dom'],
     outdir: 'dist/esm',
     minify: false,
     bundle: true,
     format: 'esm',
-    target: 'es6',
+    target: 'es5',
     tsconfig: './tsconfig.json',
+    external: Object.keys(pkg.dependencies).concat(
+      Object.keys(pkg.peerDependencies)
+    ),
     watch: {
       onRebuild(error) {
         if (error) {
-          console.log(`× ${name}: An error in prevented the rebuild.`)
+          console.log(`× ${pkg.name}: An error in prevented the rebuild.`)
           return
         }
-        console.log(`✔ ${name}: Rebuilt.`)
+        console.log(`✔ ${pkg.name}: Rebuilt.`)
       },
     },
   })

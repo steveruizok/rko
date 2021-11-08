@@ -51,6 +51,11 @@ export class StateManager<T extends object> {
    */
   public readonly useStore: UseStore<T>
 
+  /**
+   * A promise that will resolve when the state manager has loaded any peristed state.
+   */
+  public ready: Promise<'none' | 'restored' | 'migrated'>
+
   constructor(
     initialState: T,
     id?: string,
@@ -64,45 +69,58 @@ export class StateManager<T extends object> {
     this.store = createVanilla(() => this._state)
     this.useStore = create(this.store)
 
-    if (this._idbId) {
-      idb.get(this._idbId).then(async (saved) => {
-        if (saved) {
-          let next = saved
+    this.ready = new Promise<'none' | 'restored' | 'migrated'>((resolve) => {
+      let message: 'none' | 'restored' | 'migrated' = 'none'
 
-          if (version) {
-            let savedVersion = await idb.get<number>(id + '_version')
+      if (this._idbId) {
+        message = 'restored'
 
-            if (savedVersion && savedVersion < version) {
-              next = update
-                ? update(saved, initialState, savedVersion)
-                : initialState
+        idb.get(this._idbId).then(async (saved) => {
+          if (saved) {
+            let next = saved
+
+            if (version) {
+              let savedVersion = await idb.get<number>(id + '_version')
+
+              if (savedVersion && savedVersion < version) {
+                next = update
+                  ? update(saved, initialState, savedVersion)
+                  : initialState
+
+                message = 'migrated'
+              }
             }
+
+            await idb.set(id + '_version', version || -1)
+
+            this._state = deepCopy(next)
+            this._snapshot = deepCopy(next)
+            this.store.setState(this._state, true)
+          } else {
+            await idb.set(id + '_version', version || -1)
           }
-
-          await idb.set(id + '_version', version || -1)
-
-          this._state = deepCopy(next)
-          this._snapshot = deepCopy(next)
-          this.store.setState(this._state, true)
-        } else {
-          await idb.set(id + '_version', version || -1)
-        }
+          this._status = 'ready'
+          resolve(message)
+        })
+      } else {
+        // We need to wait for any override to `onReady` to take effect.
         this._status = 'ready'
-        this.onReady()
-      })
-    } else {
-      // We need to wait for any override to `onReady` to take effect.
-      new Promise<void>((resolve) => resolve()).then(() => {
-        this._status = 'ready'
-        this.onReady()
-      })
-    }
+        resolve(message)
+      }
+
+      resolve(message)
+    }).then((message) => {
+      this.onReady?.(message)
+      return message
+    })
   }
 
   /**
    * Save the current state to indexdb.
    */
-  protected persist = (): void | Promise<void> => {
+  protected persist = (id?: string): void | Promise<void> => {
+    this.onPersist?.(this._state, id)
+
     if (this._idbId) {
       return idb.set(this._idbId, this._state)
     }
@@ -115,24 +133,18 @@ export class StateManager<T extends object> {
    * @param patch The patch to apply.
    * @param id (optional) An id for the patch.
    */
-  private applyPatch = (patch: Patch<T>, id: string) => {
+  private applyPatch = (patch: Patch<T>, id?: string) => {
     const prev = this._state
     const next = merge(this._state, patch)
     const final = this.cleanup(next, prev, patch, id)
-    this.onStateWillChange(final, id)
+    this.onStateWillChange?.(final, id)
     this._state = final
     this.store.setState(this._state, true)
-    this.onStateDidChange(this._state, id)
+    this.onStateDidChange?.(this._state, id)
     return this
   }
 
   // Internal API ---------------------------------
-
-  /**
-   * A callback fired when the constructor finishes loading any
-   * persisted data.
-   */
-  protected onReady = (): void => {}
 
   /**
    * Perform any last changes to the state before updating.
@@ -155,14 +167,14 @@ export class StateManager<T extends object> {
    * @param state The next state.
    * @param id An id for the change.
    */
-  protected onStateWillChange = (state: T, id: string): void => {}
+  protected onStateWillChange?: (state: T, id?: string) => void
 
   /**
    * A life-cycle method called when the state has changed.
    * @param state The next state.
    * @param id An id for the change.
    */
-  protected onStateDidChange = (state: T, id: string): void => {}
+  protected onStateDidChange?: (state: T, id?: string) => void
 
   /**
    * Apply a patch to the current state.
@@ -172,7 +184,8 @@ export class StateManager<T extends object> {
    * @param id (optional) An id for this patch.
    */
   protected patchState = (patch: Patch<T>, id?: string): this => {
-    this.applyPatch(patch, id ? 'patch:' + id : 'patch')
+    this.applyPatch(patch, id)
+    this.onPatch?.(this._state, id)
     return this
   }
 
@@ -184,16 +197,11 @@ export class StateManager<T extends object> {
    * @param id An id for this change.
    */
   protected replaceState = (state: T, id?: string): this => {
-    const final = this.cleanup(
-      state,
-      this._state,
-      state,
-      id ? 'replace:' + id : 'replace'
-    )
-    this.onStateWillChange(final, id ? 'replace:' + id : 'replace')
+    const final = this.cleanup(state, this._state, state, id)
+    this.onStateWillChange?.(final, 'replace')
     this._state = final
     this.store.setState(this._state, true)
-    this.onStateDidChange(this._state, id ? 'replace:' + id : 'replace')
+    this.onStateDidChange?.(this._state, 'replace')
     return this
   }
 
@@ -210,23 +218,71 @@ export class StateManager<T extends object> {
     }
     this.stack.push({ ...command, id })
     this.pointer = this.stack.length - 1
-    this.applyPatch(command.after, id ? 'command:' + id : 'command')
-    this.persist()
+    this.applyPatch(command.after, id)
+    this.onCommand?.(this._state, id)
+    this.persist(id)
     return this
   }
 
   // Public API ---------------------------------
 
   /**
+   * A callback fired when the constructor finishes loading any
+   * persisted data.
+   */
+  protected onReady?: (message: 'none' | 'restored' | 'migrated') => void
+
+  /**
+   * A callback fired when a patch is applied.
+   */
+  public onPatch?: (state: T, id?: string) => void
+
+  /**
+   * A callback fired when a patch is applied.
+   */
+  public onCommand?: (state: T, id?: string) => void
+
+  /**
+   * A callback fired when the state is persisted.
+   */
+  public onPersist?: (state: T, id?: string) => void
+
+  /**
+   * A callback fired when the state is replaced.
+   */
+  public onReplace?: (state: T) => void
+
+  /**
+   * A callback fired when the state is reset.
+   */
+  public onReset?: (state: T) => void
+
+  /**
+   * A callback fired when the history is reset.
+   */
+  public onResetHistory?: (state: T) => void
+
+  /**
+   * A callback fired when a command is undone.
+   */
+  public onUndo?: (state: T) => void
+
+  /**
+   * A callback fired when a command is redone.
+   */
+  public onRedo?: (state: T) => void
+
+  /**
    * Reset the state to the initial state and reset history.
    */
   public reset = () => {
-    this.onStateWillChange(this.initialState, 'reset')
+    this.onStateWillChange?.(this.initialState, 'reset')
     this._state = this.initialState
     this.store.setState(this._state, true)
     this.resetHistory()
-    this.persist()
-    this.onStateDidChange(this._state, 'reset')
+    this.persist('reset')
+    this.onStateDidChange?.(this._state, 'reset')
+    this.onReset?.(this._state)
     return this
   }
 
@@ -242,6 +298,7 @@ export class StateManager<T extends object> {
   ): this => {
     this.stack = history
     this.pointer = pointer
+    this.onReplace?.(this._state)
     return this
   }
 
@@ -251,6 +308,7 @@ export class StateManager<T extends object> {
   public resetHistory = (): this => {
     this.stack = []
     this.pointer = -1
+    this.onResetHistory?.(this._state)
     return this
   }
 
@@ -261,8 +319,9 @@ export class StateManager<T extends object> {
     if (!this.canUndo) return this
     const command = this.stack[this.pointer]
     this.pointer--
-    this.applyPatch(command.before, command.id ? `undo:${command.id}` : 'undo')
-    this.persist()
+    this.applyPatch(command.before, `undo`)
+    this.persist('undo')
+    this.onUndo?.(this._state)
     return this
   }
 
@@ -273,8 +332,9 @@ export class StateManager<T extends object> {
     if (!this.canRedo) return this
     this.pointer++
     const command = this.stack[this.pointer]
-    this.applyPatch(command.after, command.id ? `redo:${command.id}` : 'redo')
-    this.persist()
+    this.applyPatch(command.after, 'redo')
+    this.persist('undo')
+    this.onRedo?.(this._state)
     return this
   }
 

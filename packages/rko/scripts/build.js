@@ -1,8 +1,7 @@
 /* eslint-disable */
 const fs = require('fs')
 const esbuild = require('esbuild')
-
-const name = process.env.npm_package_name || ''
+const pkg = require('../package.json')
 
 async function main() {
   if (fs.existsSync('./dist')) {
@@ -13,32 +12,40 @@ async function main() {
     })
   }
 
+  console.log(
+    Object.keys(pkg.dependencies).concat(Object.keys(pkg.peerDependencies))
+  )
+
   try {
     esbuild.buildSync({
       entryPoints: ['./src/index.ts'],
-      external: ['react', 'react-dom'],
       outdir: 'dist/cjs',
-      minify: true,
+      minify: false,
       bundle: true,
       format: 'cjs',
-      target: 'es6',
+      target: 'es5',
       tsconfig: './tsconfig.build.json',
+      external: Object.keys(pkg.dependencies).concat(
+        Object.keys(pkg.peerDependencies)
+      ),
     })
 
     esbuild.buildSync({
       entryPoints: ['./src/index.ts'],
-      external: ['react', 'react-dom'],
       outdir: 'dist/esm',
-      minify: true,
+      minify: false,
       bundle: true,
       format: 'esm',
-      target: 'es6',
+      target: 'es5',
       tsconfig: './tsconfig.build.json',
+      external: Object.keys(pkg.dependencies).concat(
+        Object.keys(pkg.peerDependencies)
+      ),
     })
 
-    console.log(`✔ ${name}: Built package.`)
+    console.log(`✔ ${pkg.name}: Built package.`)
   } catch (e) {
-    console.log(`× ${name}: Build failed due to an error.`)
+    console.log(`× ${pkg.name}: Build failed due to an error.`)
     console.log(e)
   }
 }

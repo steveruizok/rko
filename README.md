@@ -225,6 +225,16 @@ You can override this method in order to clean up any state that is no longer ne
 You can also override this method to log changes or implement
 middleware (see [Using Middleware](#using-middleware)).
 
+#### `ready`
+
+The `ready` Promise will resolve after the state finishes loading persisted data, if any.
+
+```ts
+const state = new Example()
+const message = await state.ready
+// message = 'none' | 'migrated' | 'restored'
+```
+
 #### `onReady()`
 
 The `onReady` method is called when the state is finished loading
@@ -238,7 +248,31 @@ class Example extends StateManager {
 }
 ```
 
-#### `onStateWillChange(state: State, id: string)`
+#### onPatch(state: State, id?: string)
+
+The `onPatch` method is called after the state is changed from an `onPatch` call.
+
+#### onCommand(state: State, id?: string)
+
+The `onCommand` method is called after the state is changed from an `onCommand` call.
+
+#### onPersist(state: State, id?: string)
+
+The `onPersist` method is called when the state would be persisted to storage. This method is called even if the state is not actually persisted, e.g. an `id` is not provided.
+
+#### onReplace(state: State)
+
+The `onReplace` method is called after a call to `replaceState`.
+
+#### onReset(state: State)
+
+The `onReset` method is called after a call to `resetState`.
+
+#### onResetHistory(state: State)
+
+The `onResetHistory` method is called after a call to `resetHistory`.
+
+#### `onStateWillChange(state: State, id?: string)`
 
 The `onStateWillChange` method is called just before each state change. It runs after `cleanup`. Your React components will _not_ have updated when this method runs.
 
@@ -253,7 +287,7 @@ Its first argument is the _next_ state. (You can still access the current state 
 
 You can override this method to log changes or implement middleware (see [Using Middleware](#using-middleware)). If you're interested in _what_ changed, consider using the [cleanup](#cleanup) method instead.
 
-#### `onStateDidChange(state: State, id: string)`
+#### `onStateDidChange(state: State, id?: string)`
 
 The `onStateDidChange` method works just like `onStateWillChange`, except that it runs _after_ the state has updated. Your React components will have updated by the time this method runs.
 
