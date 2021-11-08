@@ -1,6 +1,6 @@
 {
   "name": "rko",
-  "version": "0.5.22",
+  "version": "0.6.1",
   "author": {
     "name": "Steve Ruiz",
     "url": "https://twitter.com/steveruizok"
@@ -39,10 +39,10 @@
     "@parcel/transformer-js": "^2.0.0",
     "@parcel/transformer-typescript-types": "^2.0.0",
     "parcel": "latest",
-    "tslib": "^2.3.1",
-    "typescript": ">=3.0.0",
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "tslib": "^2.3.1",
+    "typescript": ">=3.0.0"
   },
   "dependencies": {
     "idb-keyval": "^6.0.3",
