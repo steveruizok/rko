@@ -1,6 +1,6 @@
 {
   "name": "rko",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "author": {
     "name": "Steve Ruiz",
     "url": "https://twitter.com/steveruizok"
@@ -19,7 +19,16 @@
   ],
   "source": "src/index.ts",
   "main": "dist/main.js",
+  "module": "dist/module.js",
   "types": "dist/index.d.ts",
+  "browserlist": [
+    ">5%",
+    "ie11",
+    "chrome",
+    "firefox",
+    "safari",
+    "not dead"
+  ],
   "targets": {
     "default": {
       "distDir": "./dist",
