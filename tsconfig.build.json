@@ -12,6 +12,8 @@
     "example"
   ],
   "compilerOptions": {
+    "rootDir": "src",
+    "baseUrl": "src",
     "composite": false,
     "incremental": false,
     "declarationMap": false,

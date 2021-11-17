@@ -1,5 +1,9 @@
 # rko
 
+## 0.6.2
+
+- Fix types.
+
 ## 0.6.1
 
 - Change export to ES5.
