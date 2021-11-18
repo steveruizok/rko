@@ -1,5 +1,13 @@
 # rko
 
+## 0.6.4
+
+- Fix error when idb does not load correctly.
+
+## 0.6.3
+
+- Fix compatibility.
+
 ## 0.6.2
 
 - Fix types.

@@ -1,4 +1,4 @@
-import { StateManager } from "rko"
+import { StateManager } from 'rko'
 
 export interface Todo {
   id: string
@@ -38,7 +38,7 @@ export class TodoState extends StateManager<State> {
         todos: {
           [id]: {
             id,
-            text: "",
+            text: '',
             isComplete: false,
             dateCreated: new Date().getTime(),
           },
@@ -92,9 +92,7 @@ export class TodoState extends StateManager<State> {
    * Remove all todos that are marked as completed.
    */
   clearCompleted = () => {
-    const completed = Object.values(this.state.todos).filter(
-      (todo) => todo.isComplete
-    )
+    const completed = Object.values(this.state.todos).filter((todo) => todo.isComplete)
 
     if (completed.length === 0) return
 
@@ -103,9 +101,7 @@ export class TodoState extends StateManager<State> {
         todos: Object.fromEntries(completed.map((todo) => [todo.id, todo])),
       },
       after: {
-        todos: Object.fromEntries(
-          completed.map((todo) => [todo.id, undefined])
-        ),
+        todos: Object.fromEntries(completed.map((todo) => [todo.id, undefined])),
       },
     })
   }
@@ -114,18 +110,18 @@ export class TodoState extends StateManager<State> {
 const initialState: State = {
   todos: {
     todo0: {
-      id: "todo0",
-      text: "Scrub the dog.",
+      id: 'todo0',
+      text: 'Scrub the dog.',
       isComplete: false,
       dateCreated: 1629575640560,
     },
     todo1: {
-      id: "todo1",
-      text: "Sharpen the dishes.",
+      id: 'todo1',
+      text: 'Sharpen the dishes.',
       isComplete: false,
       dateCreated: 1629275340560,
     },
   },
 }
 
-export const todoState = new TodoState(initialState)
+export const todoState = new TodoState(initialState, 'persisted')

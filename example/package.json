@@ -11,6 +11,7 @@
   "keywords": [],
   "license": "MIT",
   "scripts": {
+    "prepublish": "yarn build",
     "start": "node ./esbuild.config.mjs --dev tsc --watch",
     "build": "yarn clean && node ./esbuild.config.mjs && tsc --project tsconfig.json  --emitDeclarationOnly --outDir dist/types",
     "clean": "rm -rf dist"

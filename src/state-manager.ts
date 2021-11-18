@@ -75,33 +75,34 @@ export class StateManager<T extends object> {
       if (this._idbId) {
         message = 'restored'
 
-        idb.get(this._idbId).then(async (saved) => {
-          if (saved) {
-            let next = saved
+        idb
+          .get(this._idbId)
+          .then(async (saved) => {
+            if (saved) {
+              let next = saved
 
-            if (version) {
-              let savedVersion = await idb.get<number>(id + '_version')
+              if (version) {
+                let savedVersion = await idb.get<number>(id + '_version')
 
-              if (savedVersion && savedVersion < version) {
-                next = update
-                  ? update(saved, initialState, savedVersion)
-                  : initialState
+                if (savedVersion && savedVersion < version) {
+                  next = update ? update(saved, initialState, savedVersion) : initialState
 
-                message = 'migrated'
+                  message = 'migrated'
+                }
               }
+
+              await idb.set(id + '_version', version || -1)
+
+              this._state = deepCopy(next)
+              this._snapshot = deepCopy(next)
+              this.store.setState(this._state, true)
+            } else {
+              await idb.set(id + '_version', version || -1)
             }
-
-            await idb.set(id + '_version', version || -1)
-
-            this._state = deepCopy(next)
-            this._snapshot = deepCopy(next)
-            this.store.setState(this._state, true)
-          } else {
-            await idb.set(id + '_version', version || -1)
-          }
-          this._status = 'ready'
-          resolve(message)
-        })
+            this._status = 'ready'
+            resolve(message)
+          })
+          .catch((e) => console.error(e))
       } else {
         // We need to wait for any override to `onReady` to take effect.
         this._status = 'ready'
@@ -110,7 +111,7 @@ export class StateManager<T extends object> {
 
       resolve(message)
     }).then((message) => {
-      this.onReady?.(message)
+      if (this.onReady) this.onReady(message)
       return message
     })
   }
@@ -119,10 +120,12 @@ export class StateManager<T extends object> {
    * Save the current state to indexdb.
    */
   protected persist = (id?: string): void | Promise<void> => {
-    this.onPersist?.(this._state, id)
+    if (this.onPersist) {
+      this.onPersist(this._state, id)
+    }
 
     if (this._idbId) {
-      return idb.set(this._idbId, this._state)
+      return idb.set(this._idbId, this._state).catch((e) => console.error(e))
     }
   }
 
@@ -137,10 +140,14 @@ export class StateManager<T extends object> {
     const prev = this._state
     const next = merge(this._state, patch)
     const final = this.cleanup(next, prev, patch, id)
-    this.onStateWillChange?.(final, id)
+    if (this.onStateWillChange) {
+      this.onStateWillChange(final, id)
+    }
     this._state = final
     this.store.setState(this._state, true)
-    this.onStateDidChange?.(this._state, id)
+    if (this.onStateDidChange) {
+      this.onStateDidChange(this._state, id)
+    }
     return this
   }
 
@@ -155,12 +162,7 @@ export class StateManager<T extends object> {
    * @param id (optional) An id for the just-applied patch.
    * @returns The final new state to apply.
    */
-  protected cleanup = (
-    nextState: T,
-    prevState: T,
-    patch: Patch<T>,
-    id?: string
-  ): T => nextState
+  protected cleanup = (nextState: T, prevState: T, patch: Patch<T>, id?: string): T => nextState
 
   /**
    * A life-cycle method called when the state is about to change.
@@ -185,7 +187,9 @@ export class StateManager<T extends object> {
    */
   protected patchState = (patch: Patch<T>, id?: string): this => {
     this.applyPatch(patch, id)
-    this.onPatch?.(this._state, id)
+    if (this.onPatch) {
+      this.onPatch(this._state, id)
+    }
     return this
   }
 
@@ -198,10 +202,14 @@ export class StateManager<T extends object> {
    */
   protected replaceState = (state: T, id?: string): this => {
     const final = this.cleanup(state, this._state, state, id)
-    this.onStateWillChange?.(final, 'replace')
+    if (this.onStateWillChange) {
+      this.onStateWillChange(final, 'replace')
+    }
     this._state = final
     this.store.setState(this._state, true)
-    this.onStateDidChange?.(this._state, 'replace')
+    if (this.onStateDidChange) {
+      this.onStateDidChange(this._state, 'replace')
+    }
     return this
   }
 
@@ -219,7 +227,7 @@ export class StateManager<T extends object> {
     this.stack.push({ ...command, id })
     this.pointer = this.stack.length - 1
     this.applyPatch(command.after, id)
-    this.onCommand?.(this._state, id)
+    if (this.onCommand) this.onCommand(this._state, id)
     this.persist(id)
     return this
   }
@@ -276,13 +284,19 @@ export class StateManager<T extends object> {
    * Reset the state to the initial state and reset history.
    */
   public reset = () => {
-    this.onStateWillChange?.(this.initialState, 'reset')
+    if (this.onStateWillChange) {
+      this.onStateWillChange(this.initialState, 'reset')
+    }
     this._state = this.initialState
     this.store.setState(this._state, true)
     this.resetHistory()
     this.persist('reset')
-    this.onStateDidChange?.(this._state, 'reset')
-    this.onReset?.(this._state)
+    if (this.onStateDidChange) {
+      this.onStateDidChange(this._state, 'reset')
+    }
+    if (this.onReset) {
+      this.onReset(this._state)
+    }
     return this
   }
 
@@ -292,13 +306,12 @@ export class StateManager<T extends object> {
    * @param history The new array of commands.
    * @param pointer (optional) The new pointer position.
    */
-  public replaceHistory = (
-    history: Command<T>[],
-    pointer = history.length - 1
-  ): this => {
+  public replaceHistory = (history: Command<T>[], pointer = history.length - 1): this => {
     this.stack = history
     this.pointer = pointer
-    this.onReplace?.(this._state)
+    if (this.onReplace) {
+      this.onReplace(this._state)
+    }
     return this
   }
 
@@ -308,7 +321,9 @@ export class StateManager<T extends object> {
   public resetHistory = (): this => {
     this.stack = []
     this.pointer = -1
-    this.onResetHistory?.(this._state)
+    if (this.onResetHistory) {
+      this.onResetHistory(this._state)
+    }
     return this
   }
 
@@ -321,7 +336,7 @@ export class StateManager<T extends object> {
     this.pointer--
     this.applyPatch(command.before, `undo`)
     this.persist('undo')
-    this.onUndo?.(this._state)
+    if (this.onUndo) this.onUndo(this._state)
     return this
   }
 
@@ -334,7 +349,7 @@ export class StateManager<T extends object> {
     const command = this.stack[this.pointer]
     this.applyPatch(command.after, 'redo')
     this.persist('undo')
-    this.onRedo?.(this._state)
+    if (this.onRedo) this.onRedo(this._state)
     return this
   }
 
